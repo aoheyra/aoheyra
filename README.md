@@ -192,7 +192,7 @@ These become the integration suite (APP-17) and the field-test script (AND-23).
 ## Contributing
 
 1. Read the issue's scope and "Done when" line.
-2. Read [`AGENTS.md`](AGENTS.md) (and [`android/AGENTS.md`](android/AGENTS.md) for Kotlin work). They apply to humans and AI agents equally.
+2. Read the [rules](AGENTS.md) (and [android/AGENTS.md](android/AGENTS.md) for Kotlin work).
 3. One issue per PR; CI green without loosened checks.
 
 Report vulnerabilities privately to the maintainers (contact in `SECURITY.md`), not in a public issue.
