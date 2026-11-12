@@ -1,6 +1,6 @@
-# AGENTS.md
+# Rules
 
-Instructions for AI coding agents and human contributors. Read this fully before changing anything. Where this file and an issue disagree on *process*, this file wins; on *scope*, the issue wins. For work inside `android/`, also read [`android/AGENTS.md`](android/AGENTS.md).
+Read this fully before changing anything. Where this file and an issue disagree on *process*, this file wins; on *scope*, the issue wins. For work inside `android/`, also read [`android/AGENTS.md`](android/AGENTS.md).
 
 `aoheyra` is the **application**: the Rust core crate (`aoheyra`, the only FFI surface via UniFFI) and the Kotlin Android app in `android/`. It wires `aoNetwork`, `aoMesh` and `aoIdents` together, owns the app payload schema, owns **all persistence** (Rust SQLite), orchestrates the runtime, and ships the UI and the BLE shim.
 
@@ -119,7 +119,7 @@ Dependency direction: `aoNetwork ← aoMesh → aoIdents`, and `aoheyra → all 
 - **Persistence:** kill and restart tests for identity, contacts, messages and the carried store.
 - **Device evidence:** radio, battery, OEM and permission behaviour are verified on physical phones (see `android/AGENTS.md`); results are committed as tables.
 
-**Definition of done:** the "Done when" line is demonstrably met with evidence; tests added; Rust `fmt`, `clippy -D warnings`, `test`, `deny` and Android `assembleDebug` + `lint` pass locally and in CI; ADR/docs updated; no new `TODO` without an issue ID; the PR lists options considered and exactly what was run and where.
+**Definition of done:** the "Done when" line is demonstrably met with evidence; tests added; Rust `fmt`, `clippy -D warnings`, `test`, `deny` and Android `assembleDebug` + `lint` pass locally and in CI; ADR/docs updated; no new `TODO` without an issue ID.
 
 ---
 
@@ -145,6 +145,7 @@ If a command cannot run in your environment (for example no NDK or no device), s
 
 - **One issue per PR.** Scope creep becomes a new issue. Small, reviewable diffs.
 - Titles carry the ID: `[APP-09] Messaging service`, `[AND-11] Chat UI`. Branches: `app-09-messaging-service`. Commits reference the ID.
+- **A PR body references its issue** (`For issue #3`) and states what changed, why, how and which tests were introduced - nothing else. No process-file or tooling mentions. Plain traditional Markdown only: no emojis, checkmarks, arrows or other non-ASCII characters, no HTML.
 - Labels: `type:*`, `prio:P0|P1|P2`, `size:S|M|L`, plus `area:android` for Kotlin work. Milestones M0 to M7 (same names in every repo).
 - Respect `needs` in the backlog; where the summary table and an issue header differ, the issue header wins.
 - Changing CI, lints, R8 rules, permissions, `deny.toml` or MSRV is its own reviewed change.

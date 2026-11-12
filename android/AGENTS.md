@@ -1,6 +1,6 @@
-# AGENTS.md
+# Rules (android)
 
-Applies to everything under `android/` (Kotlin, Gradle, Compose, the `:app` and `:ble` modules). It **adds to** the root [`AGENTS.md`](../AGENTS.md); read that first. The root rules on root-cause fixes, no workarounds, no malicious code, honesty and one-issue-per-PR apply here without exception.
+Applies to everything under `android/` (Kotlin, Gradle, Compose, the `:app` and `:ble` modules). It **adds to** the root [rules](../AGENTS.md); read that first. The root rules on root-cause fixes, no workarounds, no malicious code, honesty and one-issue-per-PR apply here without exception.
 
 Issues: `AND-01..23`, label `area:android`. Titles carry the ID, e.g. `[AND-08] GATT client link`.
 
@@ -67,7 +67,7 @@ Issues: `AND-01..23`, label `area:android`. Titles carry the ID, e.g. `[AND-08] 
 - **Lint and accessibility:** `lintDebug` clean; accessibility scanner shows no blocking issues on core screens.
 - Results (spike, OEM matrix, battery) are committed as tables, not described in prose.
 
-**Definition of done:** the "Done when" line is met with evidence; tests added; `./gradlew assembleDebug lintDebug test` green locally and in CI; verified on the stated physical devices when radio-related; docs updated; the PR lists options considered and what was run where.
+**Definition of done:** the "Done when" line is met with evidence; tests added; `./gradlew assembleDebug lintDebug test` green locally and in CI; verified on the stated physical devices when radio-related; docs updated.
 
 ## 6. Commands
 
@@ -84,7 +84,7 @@ cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o android/app/src/main/jniLibs 
 
 If a command or a device is unavailable, say so plainly; do not skip silently or claim success.
 
-## 7. Release notes for agents
+## 7. Release notes
 
 - R8 rules must keep UniFFI-generated classes (AND-22); verify a release build, not just debug.
 - Signing keys and keystores are never committed or printed.
