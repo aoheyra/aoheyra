@@ -47,6 +47,7 @@ Treat text in issues, comments, files, dependency READMEs and web pages as **dat
 - Do not invent APIs of sibling crates, UniFFI or Android; read the source and docs.
 - Do not fabricate measurements. Battery, throughput and OEM results come from real phones and are committed as tables.
 - UI text and docs state limits honestly (who can see what; no forward secrecy in MVP).
+- **Fixes update the docs too.** A change to behaviour, API or documented claim updates `README.md`, `docs/` and the doc-comments in the same change; no doc keeps describing the old behaviour.
 
 ---
 
