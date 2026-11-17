@@ -146,7 +146,7 @@ If a command cannot run in your environment (for example no NDK or no device), s
 
 - **One issue per PR.** Scope creep becomes a new issue. Small, reviewable diffs.
 - Titles carry the ID: `[APP-09] Messaging service`, `[AND-11] Chat UI`. Branches: `app-09-messaging-service`. Commits reference the ID.
-- **A PR body references its issue** (`For issue #3`) and states what changed, why, how and which tests were introduced - nothing else. No process-file or tooling mentions. Plain traditional Markdown only: no emojis, checkmarks, arrows or other non-ASCII characters, no HTML.
+- **A PR body references its issue** (`Closes #3`) and states what changed, why, how and which tests were introduced - nothing else. No process-file or tooling mentions. Plain traditional Markdown only: no emojis, checkmarks, arrows or other non-ASCII characters, no HTML.
 - Labels: `type:*`, `prio:P0|P1|P2`, `size:S|M|L`, plus `area:android` for Kotlin work. Milestones M0 to M7 (same names in every repo).
 - Respect `needs` in the backlog; where the summary table and an issue header differ, the issue header wins.
 - Changing CI, lints, R8 rules, permissions, `deny.toml` or MSRV is its own reviewed change.
