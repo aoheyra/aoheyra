@@ -59,6 +59,11 @@ aoNetwork and aoIdents never depend on each other.
 | Location capture, permission, precision | aoheyra + Android |
 | Map and tiles | Android (offline-first) |
 
+The versioned binary `AppPayload` codec lives in
+`crates/aoheyra/src/payload.rs`; its exact layout and mapping onto aoMesh
+packet classes are recorded in
+[ADR 0003](docs/adr/0003-app-payload-schema.md).
+
 ## What the app will do (MVP)
 
 - **Direct messaging** end-to-end encrypted, delivered across multiple hops, with delivery receipts.
