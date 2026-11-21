@@ -104,7 +104,13 @@ aoheyra/
                                  └─ Storage: rusqlite + SQLCipher (WAL, migrations)
 ```
 
-Key decisions (APP-02): Rust owns **all** persistence and Kotlin never writes its own database; one UniFFI boundary with a defined threading model; the app payload schema lives here and is versioned; time and RNG are injected into every crate (no shared utility crate unless real duplication appears); one runtime-owned object reaches aoNetwork on behalf of the Kotlin `:ble` module.
+Key decisions (APP-02), recorded as short ADRs:
+
+1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
+2. [UniFFI boundary and threading model](docs/adr/0002-uniffi-boundary-and-threading.md).
+3. [The app payload schema lives here and is versioned](docs/adr/0003-app-payload-schema.md).
+4. [Time and RNG are injected](docs/adr/0004-injected-time-and-rng.md); no shared utility crate unless a real duplication appears.
+5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
 
 ## Build
 
