@@ -77,7 +77,7 @@ aoNetwork and aoIdents never depend on each other.
 - The database is encrypted (SQLCipher) with a key held by the Android Keystore; auto-backup is excluded.
 - **Known MVP limits** (see the aoIdents threat model, IDN-19): relays can see origin and destination of packets so they can rate-limit spam; no forward secrecy against recipient key compromise until IDN-15.
 
-## Repository layout (planned)
+## Repository layout
 
 ```
 aoheyra/
@@ -89,10 +89,15 @@ aoheyra/
 │   ├── app/                # UI, DI, service, permissions, Keystore vault
 │   └── ble/                # :ble module: advertiser, scanner, GATT server/client, NativeSink impl
 ├── docs/
-│   └── adr/                # the five APP-02 decisions
+│   ├── adr/                # the five APP-02 decisions
+│   └── local-development.md
 ├── AGENTS.md
 └── android/AGENTS.md
 ```
+
+AND-01 adds the Gradle Kotlin DSL scaffold with `:app` and `:ble`, minSdk 26,
+targetSdk 34 and manual constructor injection. The BLE module is an empty
+placeholder until AND-04..09.
 
 ## Architecture
 
@@ -118,7 +123,7 @@ Key decisions (APP-02), recorded as short ADRs:
 
 ## Build
 
-> Requirements: Rust 1.85 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is added in AND-01; the native build command is documented below and is not run in CI until that module exists.
+> Requirements: Rust 1.85 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
 
 ```bash
 # Native libraries (one documented command, APP-01)
