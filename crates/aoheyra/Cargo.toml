@@ -1,0 +1,19 @@
+[package]
+name = "aoheyra"
+description = "Rust core and UniFFI surface for the aoheyra Android mesh messaging app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "aoheyra"
+path = "src/lib.rs"
+crate-type = ["lib", "cdylib"]
+doctest = true
+
+[dependencies]
+ao_idents = { git = "https://github.com/aoheyra/aoIdents", tag = "v0.1.0" }
+ao_mesh = { git = "https://github.com/aoheyra/aoMesh", tag = "v0.1.0" }
+ao_network = { git = "https://github.com/aoheyra/aoNetwork", tag = "v0.1.0" }
