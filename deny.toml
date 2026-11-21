@@ -1,0 +1,44 @@
+# cargo-deny configuration (APP-01). Run with `cargo deny check`.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT-0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# APP-01: sibling crates are private workspace dependencies consumed by git tag.
+# cargo-deny treats git dependencies without a version as wildcard dependencies;
+# allowing private git/path dependencies keeps the committed tag strategy while
+# still denying wildcard requirements from crates.io.
+allow-wildcard-paths = true
+deny = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = [
+    "https://github.com/aoheyra/aoMesh",
+    "https://github.com/aoheyra/aoNetwork",
+    "https://github.com/aoheyra/aoIdents",
+]

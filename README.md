@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M0 (Foundations), documentation only.** This repository intentionally contains no Rust crate or Android module yet. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); implementation starts only when its issue is closed. The four project repositories below are fuzzed weekly by [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded and consumes tagged sibling crates. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -118,7 +118,7 @@ Key decisions (APP-02), recorded as short ADRs:
 
 ## Build
 
-> Target commands once APP-01 and AND-01 land. Requirements: Rust (version pinned in APP-01), Android SDK/NDK, `cargo-ndk`, JDK 17+.
+> Requirements: Rust 1.85 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is added in AND-01; the native build command is documented below and is not run in CI until that module exists.
 
 ```bash
 # Native libraries (one documented command, APP-01)
@@ -131,20 +131,14 @@ cd android && ./gradlew assembleDebug lintDebug
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
+cargo deny check
 ```
 
 `x86_64` is for emulator UI work only; the radio needs **physical phones**.
 
 ### Sibling crates during development
 
-Sibling crates are consumed **by git tag**. To co-develop locally, add a `[patch]` override in an **uncommitted** Cargo config (documented in `docs/local-development.md`):
-
-```toml
-# .cargo/config.toml (do not commit)
-[patch."https://github.com/aoheyra/aoNetwork"]
-ao_network = { path = "../aoNetwork" }
-# same pattern for aoMesh and aoIdents
-```
+Sibling crates are pinned to the `v0.1.0` git tag in `crates/aoheyra/Cargo.toml`. To co-develop locally, add an `[patch]` override in an **uncommitted** `.cargo/config.toml`; the exact paths and the rule that it must never be committed are documented in [docs/local-development.md](docs/local-development.md). A PR must resolve with the committed tags and no local patches.
 
 ## Milestones and issues
 
@@ -192,7 +186,7 @@ These become the integration suite (APP-17) and the field-test script (AND-23).
 
 ## Open decisions and risks
 
-- **aoIdents location:** the repo was not visible in the org (IDN-00). aoMesh depends on its types.
+- **Sibling API stability:** the three siblings are pinned to `v0.1.0`; changes to their public APIs require a new tag here.
 - **Relay-visible metadata** in the MVP (see MSH-02, IDN-19).
 - **Forward secrecy** deferred to IDN-15; the threat model says so plainly.
 - **Android connection limits and OEM background kills** are unknown until AND-02 and AND-20; aoNetwork defaults may change.
@@ -209,4 +203,4 @@ Report vulnerabilities privately to the maintainers (contact in `SECURITY.md`), 
 
 ## License
 
-A licence for all four repos is chosen in APP-01 so the cross-dependencies are legal. Until then, no licence is granted.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option, matching aoMesh, aoNetwork and aoIdents.
