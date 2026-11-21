@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M0 (Foundations).** The repo is currently empty. This README describes the planned design from the project backlog (`APP-xx`, `AND-xx`). Nothing here is implemented until its issue is closed.
+> **Status: pre-alpha, M0 (Foundations), documentation only.** This repository intentionally contains no Rust crate or Android module yet. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); implementation starts only when its issue is closed. The four project repositories below are fuzzed weekly by [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -31,6 +31,10 @@ aoNetwork and aoIdents never depend on each other.
 | [`aoIdents`](https://github.com/aoheyra/aoIdents) | `ao_idents` | Node identity, keys, signatures, sealed messages, rotating tags, contact-book logic, replay guard |
 | [`aoMesh`](https://github.com/aoheyra/aoMesh) | `ao_mesh` | Packet format, routing per traffic class, store-and-forward, sync, flood control, presence, node directory |
 | [`aoheyra`](https://github.com/aoheyra/aoheyra) | `aoheyra` | App payload schema, persistence (SQLite), runtime orchestration, **the only FFI (UniFFI)**, Kotlin UI and BLE shim |
+
+## Weekly fuzzing
+
+[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this docs-only repository. `aoheyra` has no fuzz targets while it has no Rust code; adding code here requires a matching fuzz target in the same change that introduces the parser.
 
 ## Ownership map (one owner per concept)
 
