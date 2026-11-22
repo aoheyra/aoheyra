@@ -6,6 +6,13 @@
 //! Application schema, persistence and orchestration are added by APP-04 to
 //! APP-16, never by reimplementing sibling-crate behaviour.
 
+#![forbid(unsafe_code)]
+#![deny(missing_docs)]
+
+/// Versioned binary schema for text, location, profile and receipt payloads
+/// (APP-07).
+pub mod payload;
+
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
