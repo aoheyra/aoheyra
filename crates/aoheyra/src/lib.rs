@@ -10,9 +10,20 @@
 //! The messaging module owns direct-message state, sealing plans and inbox
 //! bookkeeping; it stays independent of the runtime and never interprets an
 //! application payload. APP-03's UniFFI object calls into these services.
+//!
+//! The contacts module owns QR onboarding, trust, key-change alerts and the
+//! send gate. It stays generic over aoIdents' `ContactStore` seam and never
+//! persists contacts itself.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+
+/// QR onboarding, trust, key-change alerts and the send gate (APP-10).
+pub mod contacts;
+
+pub use contacts::{
+    ContactsError, ContactsEvent, ContactsService, KeyChangeAlert, KeyChangeDecision, SafetyNumber,
+};
 
 /// Direct-message state machine, sealing plans and bounded inbox (APP-09).
 pub mod messaging;
@@ -65,7 +76,10 @@ pub mod release;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ao_idents::{Identity, SealedMessage};
+    use ao_idents::{
+        ContactUpdate, Identity, IdentityCard, MemoryContactStore, RotationStatement,
+        SealedMessage, Trust,
+    };
     use rand08::{SeedableRng, rngs::StdRng};
 
     fn identities() -> (Identity, Identity) {
@@ -241,5 +255,191 @@ mod tests {
             Err(MessagingError::Misdirected)
         );
         let _ = bob_public;
+    }
+
+    #[test]
+    fn changed_key_raises_alert_and_blocks_sending_until_decision() {
+        let alice = Identity::from_seed([1; 32]);
+        let bob = Identity::from_seed([2; 32]);
+        let successor = Identity::from_seed([3; 32]);
+        let mut service = ContactsService::new(alice.node_id(), MemoryContactStore::new());
+
+        let bob_qr = bob.card(b"Bob", 1_000).expect("bob card").to_qr_string();
+        let (bob_id, added) = service.add_from_qr(&bob_qr, 1_000).expect("bob added");
+        assert_eq!(bob_id, bob.node_id());
+        assert!(added.contains(&ContactsEvent::ContactAdded {
+            node_id: bob_id,
+            update: ContactUpdate::FirstUse,
+        }));
+        assert!(service.can_send(bob_id).is_ok());
+
+        let offered = successor.card(b"Bob", 1_100).expect("successor card");
+        let alerts = service
+            .observe_claimed_card(bob_id, &offered, 1_100)
+            .expect("key-change alert");
+        assert_eq!(
+            alerts,
+            vec![ContactsEvent::KeyChangeAlert {
+                node_id: bob_id,
+                offered_node_id: successor.node_id(),
+                observed_at_ms: 1_100,
+            }]
+        );
+        assert_eq!(
+            service.can_send(bob_id),
+            Err(ContactsError::SendBlockedPendingKeyDecision(bob_id))
+        );
+        assert_eq!(
+            service
+                .observe_claimed_card(bob_id, &offered, 1_105)
+                .expect("repeat is idempotent"),
+            Vec::new()
+        );
+        assert_eq!(service.pending_key_changes().len(), 1);
+
+        let stored = service.contact(bob_id).expect("bob stays stored");
+        assert_eq!(*stored.agreement_pk(), *bob.public().agreement_pk());
+        assert_eq!(stored.trust(), Trust::Unverified);
+
+        let statement = RotationStatement::sign(&bob, &successor).expect("signed rotation");
+        let resolved = service
+            .accept_rotation(bob_id, &statement, 1_200)
+            .expect("rotation accepted");
+        assert_eq!(
+            resolved,
+            vec![ContactsEvent::KeyChangeResolved {
+                node_id: bob_id,
+                decision: KeyChangeDecision::AcceptRotation,
+                successor: Some(successor.node_id()),
+                at_ms: 1_200,
+            }]
+        );
+        assert!(service.can_send(successor.node_id()).is_ok());
+        assert_eq!(
+            service.can_send(bob_id),
+            Err(ContactsError::UnknownContact(bob_id))
+        );
+        assert_eq!(service.contacts().len(), 1);
+        assert!(service.pending_key_changes().is_empty());
+    }
+
+    #[test]
+    fn blocking_a_key_change_resolves_the_alert_without_a_rotation() {
+        let alice = Identity::from_seed([1; 32]);
+        let bob = Identity::from_seed([2; 32]);
+        let impostor = Identity::from_seed([9; 32]);
+        let mut service = ContactsService::new(alice.node_id(), MemoryContactStore::new());
+
+        let bob_qr = bob.card(b"Bob", 2_000).expect("bob card").to_qr_string();
+        let (bob_id, _) = service.add_from_qr(&bob_qr, 2_000).expect("bob added");
+        let offered = impostor.card(b"Bob", 2_010).expect("offered card");
+        let alerts = service
+            .observe_claimed_card(bob_id, &offered, 2_010)
+            .expect("alert");
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(
+            service.verify(bob_id, 2_015),
+            Err(ContactsError::PendingKeyChange(bob_id))
+        );
+        assert_eq!(
+            service.rename(bob_id, Some("Impostor"), 2_015),
+            Err(ContactsError::PendingKeyChange(bob_id))
+        );
+
+        let resolved = service
+            .block_key_change(bob_id, 2_020)
+            .expect("block decision");
+        assert_eq!(
+            resolved,
+            vec![ContactsEvent::KeyChangeResolved {
+                node_id: bob_id,
+                decision: KeyChangeDecision::Block,
+                successor: None,
+                at_ms: 2_020,
+            }]
+        );
+        assert_eq!(
+            service.can_send(bob_id),
+            Err(ContactsError::ContactBlocked(bob_id))
+        );
+        assert!(service.pending_key_changes().is_empty());
+    }
+
+    #[test]
+    fn verification_rename_safety_number_and_card_export_work() {
+        let alice = Identity::from_seed([1; 32]);
+        let bob = Identity::from_seed([2; 32]);
+        let mut alice_service = ContactsService::new(alice.node_id(), MemoryContactStore::new());
+        let mut bob_service = ContactsService::new(bob.node_id(), MemoryContactStore::new());
+
+        let bob_qr = bob.card(b"Bob", 3_000).expect("bob card").to_qr_string();
+        let alice_qr = alice
+            .card(b"Alice", 3_000)
+            .expect("alice card")
+            .to_qr_string();
+        let (bob_id, _) = alice_service
+            .add_from_qr(&bob_qr, 3_000)
+            .expect("alice adds bob");
+        let (alice_id, _) = bob_service
+            .add_from_qr(&alice_qr, 3_000)
+            .expect("bob adds alice");
+        assert_eq!(alice_id, alice.node_id());
+
+        let verified = alice_service.verify(bob_id, 3_010).expect("verified");
+        assert_eq!(
+            verified,
+            vec![ContactsEvent::Verified {
+                node_id: bob_id,
+                at_ms: 3_010,
+            }]
+        );
+        let renamed = alice_service
+            .rename(bob_id, Some("Best Bob"), 3_020)
+            .expect("renamed");
+        assert_eq!(
+            renamed,
+            vec![ContactsEvent::Renamed {
+                node_id: bob_id,
+                at_ms: 3_020,
+            }]
+        );
+        let contact = alice_service.contact(bob_id).expect("bob contact");
+        assert_eq!(contact.trust(), Trust::Verified);
+        assert_eq!(contact.petname(), Some("Best Bob"));
+
+        let alice_number = alice_service
+            .safety_number(&alice, bob_id)
+            .expect("alice safety number");
+        let bob_number = bob_service
+            .safety_number(&bob, alice.node_id())
+            .expect("bob safety number");
+        assert_eq!(alice_number, bob_number);
+        assert_eq!(alice_number.text().len(), 19);
+
+        let exported = alice_service
+            .export_own_card(&alice, b"Alice", 3_030)
+            .expect("own card");
+        let parsed = IdentityCard::from_qr_string(&exported).expect("parsed own card");
+        assert_eq!(*parsed.signing_pk(), *alice.public().signing_pk());
+        assert_eq!(
+            alice_service.export_own_card(&bob, b"Bob", 3_030),
+            Err(ContactsError::WrongLocalIdentity {
+                expected: alice.node_id(),
+                actual: bob.node_id(),
+            })
+        );
+
+        let blocked = alice_service.block(bob_id, 3_040).expect("blocked");
+        assert_eq!(
+            blocked,
+            vec![ContactsEvent::Blocked {
+                node_id: bob_id,
+                at_ms: 3_040,
+            }]
+        );
+        assert_eq!(
+            alice_service.can_send(bob_id),
+            Err(ContactsError::ContactBlocked(bob_id))
+        );
     }
 }

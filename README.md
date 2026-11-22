@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M3 (Direct messaging over the mesh).** The Rust workspace contains the APP-08 runtime and APP-09 messaging service, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M3 (Direct messaging over the mesh).** The Rust workspace contains the APP-08 runtime, APP-09 messaging service and APP-10 contacts service, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -34,7 +34,7 @@ aoNetwork and aoIdents never depend on each other.
 
 ## Weekly fuzzing
 
-[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. Neither the runtime nor the messaging service adds an app wire parser; they delegate packet and seal decoding to the sibling crates. A future app parser must ship a matching fuzz target in the same change.
+[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. The runtime, messaging and contacts services add no app wire parser; they delegate packet, seal, card and QR decoding to the sibling crates. A future app parser must ship a matching fuzz target in the same change.
 
 ## Ownership map (one owner per concept)
 
@@ -136,6 +136,18 @@ first conversation entries with unread counts until APP-05 persists them. See
 The host drains `take_submissions` and submits each header and payload through
 the runtime. The payload remains opaque until APP-07 defines the app schema.
 
+APP-10 implements the contacts box as a sans-IO `ContactsService<S>` over
+aoIdents' `ContactStore`. It adds contacts from verified QR strings, verifies
+and renames them, computes safety numbers, exports the local card, and gates
+sending through `can_send`. A claimed identity presenting different keys raises
+a pending key-change alert that blocks sending until the user accepts a signed
+rotation or blocks the change. See
+[ADR 0008](docs/adr/0008-contacts-service-and-send-gate.md).
+
+APP-06 will inject the encrypted SQLite store. Until then the service is
+generic and tests use aoIdents' in-memory store, so no contact logic is
+duplicated here and no persistence is faked.
+
 Key decisions (APP-02), recorded as short ADRs:
 
 1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
@@ -145,6 +157,7 @@ Key decisions (APP-02), recorded as short ADRs:
 5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
 6. [The sans-IO runtime owns lifecycle, store and event fan-out](docs/adr/0006-runtime-orchestration.md) (APP-08).
 7. [The messaging service prepares opaque submissions and owns status state](docs/adr/0007-messaging-service.md) (APP-09).
+8. [The contacts service wraps aoIdents and gates sending on key decisions](docs/adr/0008-contacts-service-and-send-gate.md) (APP-10).
 
 The bridge maps every failure to a sealed `FfiException` case rather than a
 string: `InvalidDataDirectory` for a bad data directory, `InvalidArgument` for
