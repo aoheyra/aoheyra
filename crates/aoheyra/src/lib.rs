@@ -85,6 +85,9 @@ uniffi::setup_scaffolding!();
 /// Encrypted SQLite message store and schema migration support (APP-04).
 pub mod storage;
 
+/// Bounded local public-channel history and spam controls (APP-14).
+pub mod channels;
+
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
