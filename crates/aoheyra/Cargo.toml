@@ -25,6 +25,9 @@ bindgen = ["uniffi/cli"]
 # Dedicated current-thread executor for the Android service thread. The
 # sans-IO orchestrator stays independent of any async runtime.
 runtime-tokio = ["dep:tokio"]
+# Deterministic APP-17 acceptance scenarios on the host simulator only.
+# The Android cdylib does not link the simulator RNG or adapter seams.
+e2e = ["ao_mesh/sim"]
 
 [dependencies]
 # Pre-release siblings are untagged git sources on their default branches,
