@@ -91,6 +91,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Release-tag matrix and its manifest check (APP-18).
 pub mod release;
 
+/// Bounded offline-map item stream and debug topology snapshot (APP-13).
+pub mod map;
+
 #[cfg(test)]
 mod tests {
     use super::*;

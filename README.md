@@ -216,6 +216,17 @@ are versioned and tested from an empty file and from the previous schema.
 runs aoMesh's shared conformance suite and uses single-statement quota checks.
 Android auto-backup is excluded. See [`docs/storage.md`](docs/storage.md).
 
+### Map data service (APP-13)
+
+`crates/aoheyra/src/map.rs` provides the offline map with one bounded stream
+of self, contact and mesh items keyed by the shared aoIdents `NodeId`. Items
+carry relative age and `Fresh`/`Stale` levels, stale items are marked before
+removal, and every addition, update, staleness change and removal is a
+coalesced event. Directory location bytes are decoded with APP-07's payload
+codec. `topology` gives the debug overlay neighbour counters and directory
+counts only. The decision is recorded in
+[`docs/adr/0012-map-data-service.md`](docs/adr/0012-map-data-service.md).
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
