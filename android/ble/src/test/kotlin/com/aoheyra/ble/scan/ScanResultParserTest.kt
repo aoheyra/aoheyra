@@ -36,7 +36,7 @@ class ScanResultParserTest {
         )
         assertEquals(1, events.results.size)
         assertTrue(events.results[0].first == key)
-        assertEquals(-55.toShort(), events.results[0].second)
+        assertEquals(-55, events.results[0].second.toInt())
         assertTrue(events.results[0].third.contentEquals(beacon))
     }
 

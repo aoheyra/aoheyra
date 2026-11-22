@@ -40,12 +40,20 @@ class ScanPlannerTest {
     }
 
     @Test
-    fun `stop and radio toggle restart scanning`() {
+    fun `bluetooth toggle restarts the last desired scan profile`() {
+        val planner = ScanPlanner(TestEvents(), TestClock())
+        planner.setScanning(ScanPower.BALANCED)
+        assertEquals(ScanCommand.Hold, planner.setRadioReady(false))
+        assertEquals(ScanCommand.Start(ScanPower.BALANCED), planner.setRadioReady(true))
+    }
+
+    @Test
+    fun `an explicit stop is not undone by a bluetooth toggle`() {
         val planner = ScanPlanner(TestEvents(), TestClock())
         planner.setScanning(ScanPower.BALANCED)
         assertEquals(ScanCommand.Stop, planner.setScanning(null))
         assertEquals(ScanCommand.Hold, planner.setRadioReady(false))
-        assertEquals(ScanCommand.Start(ScanPower.BALANCED), planner.setRadioReady(true))
+        assertEquals(ScanCommand.Hold, planner.setRadioReady(true))
     }
 
     @Test
