@@ -245,6 +245,15 @@ message text and coordinates. [ADR 0014](docs/adr/0014-diagnostics-bundle.md)
 records the format and the privacy argument; the caller, not the Rust core,
 writes the returned bytes and asks the user before sharing them.
 
+### Data lifecycle (APP-16)
+
+`aoheyra::lifecycle` applies retention, panic wipe and encrypted
+backup/restore policy through typed `LifecycleStore` and `IdentityVault`
+seams. Identity backup uses aoIdents; contacts are sealed with aoIdents to the
+restored identity. [ADR 0015](docs/adr/0015-data-lifecycle.md) records the
+design. The SQLite store and Android Keystore bridge are the intended
+implementers of the typed seams; this module owns only the policy and bounds.
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
