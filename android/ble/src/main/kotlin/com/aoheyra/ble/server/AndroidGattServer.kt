@@ -1,5 +1,7 @@
 package com.aoheyra.ble.server
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -10,6 +12,8 @@ import android.bluetooth.BluetoothGattServerCallback
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.BleResult
 import com.aoheyra.ble.core.BleThread
@@ -18,7 +22,15 @@ import com.aoheyra.ble.core.PeerKey
 import com.aoheyra.ble.core.Stage
 import com.aoheyra.ble.scan.BluetoothAddress
 
-/** Android GATT server host; all callbacks run on the single BLE thread. */
+/**
+ * Android GATT server host; all callbacks run on the single BLE thread.
+ *
+ * Lint cannot follow BLUETOOTH_CONNECT checks through the private platform
+ * helpers below. Every call is gated by `checkSelfPermission` on API 31+ and
+ * also handles `SecurityException` if the permission is revoked between the
+ * check and the call, so the suppression is limited to this class.
+ */
+@SuppressLint("MissingPermission")
 class AndroidGattServer(
     context: Context,
     private val host: GattServerHost,
@@ -81,7 +93,7 @@ class AndroidGattServer(
                     BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
                 }
                 if (responseNeeded) {
-                    server?.sendResponse(device, requestId, status, offset, null)
+                    respond(device, requestId, status, offset)
                 }
                 if (!accepted) {
                     cancel(device, peer, BleError.PeerMisbehaved)
@@ -111,7 +123,7 @@ class AndroidGattServer(
                     BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
                 }
                 if (responseNeeded) {
-                    server?.sendResponse(device, requestId, status, offset, null)
+                    respond(device, requestId, status, offset)
                 }
                 if (!accepted) {
                     cancel(device, peer, BleError.PeerMisbehaved)
@@ -147,11 +159,19 @@ class AndroidGattServer(
         if (server != null) return Result.success(Unit)
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter?.isEnabled != true) return Result.failure(BleError.RadioUnavailable)
-        val opened = try {
-            manager?.openGattServer(appContext, callback)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            appContext.checkSelfPermission(
+                Manifest.permission.BLUETOOTH_CONNECT,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return Result.failure(BleError.RadioUnavailable)
+        val bluetoothManager = manager ?: return Result.failure(BleError.RadioUnavailable)
+        val opened: BluetoothGattServer
+        try {
+            opened = bluetoothManager.openGattServer(appContext, callback)
+                ?: return Result.failure(BleError.RadioUnavailable)
         } catch (security: SecurityException) {
             return Result.failure(BleError.RadioUnavailable)
-        } ?: return Result.failure(BleError.RadioUnavailable)
+        }
         val service = BluetoothGattService(GattUuids.SERVICE, BluetoothGattService.SERVICE_TYPE_PRIMARY)
         val rx = BluetoothGattCharacteristic(
             GattUuids.RX,
@@ -171,8 +191,19 @@ class AndroidGattServer(
         )
         service.addCharacteristic(rx)
         service.addCharacteristic(notifyCharacteristic)
-        if (!opened.addService(service)) {
-            opened.close()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            appContext.checkSelfPermission(
+                Manifest.permission.BLUETOOTH_CONNECT,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return Result.failure(BleError.RadioUnavailable)
+        var added: Boolean
+        try {
+            added = opened.addService(service)
+        } catch (security: SecurityException) {
+            added = false
+        }
+        if (!added) {
+            closeQuietly(opened)
             return Result.failure(BleError.RadioUnavailable)
         }
         server = opened
@@ -198,11 +229,54 @@ class AndroidGattServer(
         device: BluetoothDevice,
         characteristic: BluetoothGattCharacteristic,
         bytes: ByteArray,
-    ): Boolean = try {
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            appContext.checkSelfPermission(
+                Manifest.permission.BLUETOOTH_CONNECT,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return false
         characteristic.value = bytes.copyOf()
-        gattServer.notifyCharacteristicChanged(device, characteristic, false)
-    } catch (security: SecurityException) {
-        false
+        var delivered: Boolean
+        try {
+            delivered = gattServer.notifyCharacteristicChanged(device, characteristic, false)
+        } catch (security: SecurityException) {
+            return false
+        }
+        return delivered
+    }
+
+    /** The peer already timed out if the response cannot be delivered. */
+    private fun respond(
+        device: BluetoothDevice,
+        requestId: Int,
+        status: Int,
+        offset: Int,
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (appContext.checkSelfPermission(
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                ) != PackageManager.PERMISSION_GRANTED
+            ) return
+        }
+        val gattServer = server ?: return
+        try {
+            gattServer.sendResponse(device, requestId, status, offset, null)
+        } catch (security: SecurityException) {
+            Unit
+        }
+    }
+
+    private fun closeQuietly(gattServer: BluetoothGattServer) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            appContext.checkSelfPermission(
+                Manifest.permission.BLUETOOTH_CONNECT,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+        try {
+            gattServer.close()
+        } catch (security: SecurityException) {
+            Unit
+        }
     }
 
     /** Reports a Rust disconnect as a cancel for an inbound central. */
@@ -214,14 +288,27 @@ class AndroidGattServer(
 
     /** Closes the server once; late callbacks find no device. */
     fun stop() {
-        server?.close()
+        val gattServer = server
         server = null
         tx = null
         devices.clear()
+        if (gattServer != null) closeQuietly(gattServer)
     }
 
     private fun cancel(device: BluetoothDevice, peer: PeerKey, status: BleError) {
-        server?.cancelConnection(device)
+        val gattServer = server
+        if (gattServer != null &&
+            (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                appContext.checkSelfPermission(
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                ) == PackageManager.PERMISSION_GRANTED)
+        ) {
+            try {
+                gattServer.cancelConnection(device)
+            } catch (security: SecurityException) {
+                Unit
+            }
+        }
         devices.remove(peer)
         host.onCentralDisconnected(peer, status)
     }
