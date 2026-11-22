@@ -5,6 +5,7 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.bluetooth.le.BluetoothLeScanner
 import android.os.ParcelUuid
 import com.aoheyra.ble.advertise.AndroidAdvertiser
 import com.aoheyra.ble.core.BleError
@@ -25,7 +26,7 @@ class AndroidScanner(
         // three-argument overload delivers callbacks on that caller thread,
         // so no Handler is needed here; the four-argument overload is not
         // available at this module's compile SDK.
-        callback?.let(scanner::stopScan)
+        callback?.let { stopQuietly(scanner, it) }
 
         val filter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(AndroidAdvertiser.SERVICE_UUID))
@@ -51,7 +52,11 @@ class AndroidScanner(
                 results.forEach(::forward)
             }
         }
-        scanner.startScan(listOf(filter), settings, next)
+        try {
+            scanner.startScan(listOf(filter), settings, next)
+        } catch (security: SecurityException) {
+            return Result.failure(BleError.RadioUnavailable)
+        }
         callback = next
         return Result.success(Unit)
     }
@@ -59,9 +64,18 @@ class AndroidScanner(
     override fun stop(): BleResult<Unit> {
         val scanner = adapter?.bluetoothLeScanner
             ?: return Result.failure(BleError.RadioUnavailable)
-        callback?.let(scanner::stopScan)
+        callback?.let { stopQuietly(scanner, it) }
         callback = null
         return Result.success(Unit)
+    }
+
+    /** A revoked permission means scanning is already gone, so stop is a no-op. */
+    private fun stopQuietly(scanner: BluetoothLeScanner, cb: ScanCallback) {
+        try {
+            scanner.stopScan(cb)
+        } catch (security: SecurityException) {
+            Unit
+        }
     }
 
     private fun forward(result: ScanResult) {
