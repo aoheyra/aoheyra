@@ -354,10 +354,10 @@ impl LocationUpdate {
         heading_tenths: Option<u16>,
     ) -> Result<Self, PayloadError> {
         validate_coordinates(latitude_e6, longitude_e6)?;
-        if let Some(heading) = heading_tenths {
-            if heading > 3600 {
-                return Err(PayloadError::InvalidHeading);
-            }
+        if let Some(heading) = heading_tenths
+            && heading > 3600
+        {
+            return Err(PayloadError::InvalidHeading);
         }
         match precision {
             LocationPrecision::Precise => {
@@ -850,10 +850,10 @@ fn decode_location(bytes: &[u8]) -> Result<AppPayload, PayloadError> {
     if accuracy_m == 0 {
         return Err(PayloadError::InvalidAccuracy);
     }
-    if let Some(heading) = heading_tenths {
-        if heading > 3600 {
-            return Err(PayloadError::InvalidHeading);
-        }
+    if let Some(heading) = heading_tenths
+        && heading > 3600
+    {
+        return Err(PayloadError::InvalidHeading);
     }
     Ok(AppPayload::Location(LocationUpdate {
         precision,
