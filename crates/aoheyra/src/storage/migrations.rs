@@ -3,13 +3,13 @@
 //! `user_version` is the version counter. Each step runs in one transaction,
 //! so a crash or a bad migration cannot leave a half-applied schema. v1 is the
 //! original table set; v2 adds the indexes used by the mesh store's quota and
-//! expiry queries (APP-05).
+//! expiry queries, and v3 adds the eviction-order indexes (APP-05).
 
 use super::StorageError;
 use rusqlite::{Connection, TransactionBehavior};
 
 /// Schema version written by this binary.
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 /// v1: every table owned by aoheyra, keyed by opaque node IDs or message IDs.
 const V1_SCHEMA: &str = "\
@@ -87,6 +87,17 @@ CREATE INDEX IF NOT EXISTS idx_mesh_store_class_size ON mesh_store(class, size);
 CREATE INDEX IF NOT EXISTS idx_directory_cache_expiry ON directory_cache(expires_at_ms);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, created_at_ms);";
 
+/// v3: ordered eviction candidates for global, per-origin and per-class scopes.
+/// Without these indexes each 512-row eviction chunk re-sorted the whole live
+/// table, turning a 100k-row eviction into quadratic work.
+const V3_SCHEMA: &str = "\
+CREATE INDEX IF NOT EXISTS idx_mesh_store_eviction_order ON mesh_store(\
+    copies_left ASC, priority DESC, first_seen_ms ASC, msg_id ASC);
+CREATE INDEX IF NOT EXISTS idx_mesh_store_origin_eviction_order ON mesh_store(\
+    origin, copies_left ASC, priority DESC, first_seen_ms ASC, msg_id ASC);
+CREATE INDEX IF NOT EXISTS idx_mesh_store_class_eviction_order ON mesh_store(\
+    class, copies_left ASC, priority DESC, first_seen_ms ASC, msg_id ASC);";
+
 /// Read the current `user_version`.
 pub(super) fn current_version(connection: &Connection) -> Result<u32, StorageError> {
     let raw: i32 = connection.query_row("PRAGMA user_version", [], |row| row.get(0))?;
@@ -142,6 +153,7 @@ fn migrate_to(
         let sql = match next {
             1 => V1_SCHEMA,
             2 => V2_SCHEMA,
+            3 => V3_SCHEMA,
             _ => return Err(StorageError::UnsupportedSchemaVersion(next)),
         };
         apply(connection, next, sql)?;
@@ -203,7 +215,7 @@ mod tests {
                 |row| row.get(0),
             )
             .unwrap();
-        assert_eq!(indexes, 7);
+        assert_eq!(indexes, 10);
     }
 
     #[test]
@@ -260,7 +272,7 @@ mod tests {
                 )?)
             })
             .unwrap();
-        assert_eq!(indexes, 7);
+        assert_eq!(indexes, 10);
     }
 
     #[test]

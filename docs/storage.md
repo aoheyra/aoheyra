@@ -61,7 +61,9 @@ per-class bytes, and `COUNT(*)` for entries. Rows are never loaded just to
 count them. Eviction follows aoMesh's in-memory policy: expired entries first,
 then the first over-quota scope in origin, class, global order. Victims are
 ordered by `copies_left` ascending, `priority` descending, `first_seen` and
-`msg_id` ascending. Large stores delete up to 512 ordered victims per
+`msg_id` ascending. Three eviction-order indexes cover the global, per-origin
+and per-class queries, so each 512-row chunk streams from an index instead of
+re-sorting the live table. Large stores delete up to 512 ordered victims per
 statement, so a 100k-row store does not issue 99k one-row deletes.
 
 The shared aoMesh conformance suite runs against this backend. The 100k-row
@@ -73,8 +75,8 @@ bound.
 
 `cargo test` covers:
 
-- migrating an empty file to v2 and checking every table and index;
-- migrating a seeded v1 file to v2 and checking that all seven tables keep
+- migrating an empty file to v3 and checking every table and index;
+- migrating a seeded v1 file to v3 and checking that all seven tables keep
   their rows;
 - rejecting a schema version newer than this binary;
 - encrypted header bytes (not the `SQLite format 3` magic), rejection without
