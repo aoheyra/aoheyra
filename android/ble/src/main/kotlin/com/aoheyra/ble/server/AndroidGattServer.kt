@@ -281,7 +281,7 @@ class AndroidGattServer(
     }
 
     /** Reports a Rust disconnect as a cancel for an inbound central. */
-    override fun cancel(peer: PeerKey, status: BleError = BleError.Requested): BleResult<Unit> {
+    override fun cancel(peer: PeerKey, status: BleError): BleResult<Unit> {
         val device = devices[peer] ?: return Result.failure(BleError.LinkUnknown)
         cancel(device, peer, status)
         return Result.success(Unit)
