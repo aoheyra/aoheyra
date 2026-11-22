@@ -120,46 +120,80 @@ private class AndroidGattHandle(
 ) : GattHandle {
     private var closed = false
 
-    override fun requestMtu(mtu: Int): Boolean = gatt.requestMtu(mtu)
+    override fun requestMtu(mtu: Int): Boolean = try {
+        gatt.requestMtu(mtu)
+    } catch (security: SecurityException) {
+        false
+    }
 
-    override fun discoverServices(): Boolean = gatt.discoverServices()
+    override fun discoverServices(): Boolean = try {
+        gatt.discoverServices()
+    } catch (security: SecurityException) {
+        false
+    }
 
     override fun setCharacteristicNotification(enabled: Boolean): Boolean {
         val tx = txCharacteristic() ?: return false
-        return gatt.setCharacteristicNotification(tx, enabled)
+        return try {
+            gatt.setCharacteristicNotification(tx, enabled)
+        } catch (security: SecurityException) {
+            false
+        }
     }
 
     override fun writeDescriptor(value: ByteArray): Boolean {
         val descriptor = txCharacteristic()?.getDescriptor(GattUuids.CCCD) ?: return false
         descriptor.value = value.copyOf()
-        return gatt.writeDescriptor(descriptor)
+        return try {
+            gatt.writeDescriptor(descriptor)
+        } catch (security: SecurityException) {
+            false
+        }
     }
 
     override fun writeCharacteristic(value: ByteArray): Boolean {
         val rx = rxCharacteristic() ?: return false
         rx.value = value.copyOf()
         rx.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-        return gatt.writeCharacteristic(rx)
+        return try {
+            gatt.writeCharacteristic(rx)
+        } catch (security: SecurityException) {
+            false
+        }
     }
 
-    override fun disconnect(): Boolean {
+    override fun disconnect(): Boolean = try {
         gatt.disconnect()
-        return true
+        true
+    } catch (security: SecurityException) {
+        false
     }
 
     override fun close() {
         if (closed) return
         closed = true
-        gatt.close()
-        onClose(gatt)
+        try {
+            gatt.close()
+        } catch (security: SecurityException) {
+            Unit
+        } finally {
+            onClose(gatt)
+        }
     }
 
-    override fun requestConnectionPriority(priority: Int): Boolean =
+    override fun requestConnectionPriority(priority: Int): Boolean = try {
         gatt.requestConnectionPriority(priority)
+    } catch (security: SecurityException) {
+        false
+    }
 
     override fun setPreferredPhy(tx: Int, rx: Int, options: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            gatt.setPreferredPhy(tx, rx, options)
+            try {
+                gatt.setPreferredPhy(tx, rx, options)
+            } catch (security: SecurityException) {
+                Unit
+            }
         }
     }
 
