@@ -124,6 +124,7 @@ android {
 
 dependencies {
     implementation(project(":ble"))
+    implementation("androidx.core:core-ktx:1.13.1")
 
     // Required by the generated UniFFI Kotlin bindings (see the 0.29 docs).
     implementation("net.java.dev.jna:jna:5.13.0@aar")

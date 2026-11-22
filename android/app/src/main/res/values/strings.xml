@@ -39,6 +39,16 @@
     <string name="oem_other_detail">If relaying stops with the screen off, look in Android Settings for background-data and battery restrictions for aoheyra. The exact menu depends on the device and Android version.</string>
     <string name="cd_oem_help_list">Vendor-specific steps for keeping the mesh running</string>
 
+    <!-- AND-10: connected-device foreground service notification. -->
+    <string name="mesh_channel_name">Mesh service</string>
+    <string name="mesh_channel_description">Keeps the mesh running when the screen is off</string>
+    <string name="mesh_notification_title">aoheyra mesh</string>
+    <string name="mesh_state_stopped">Mesh stopped</string>
+    <string name="mesh_state_starting">Starting mesh</string>
+    <string name="mesh_state_running">Mesh running</string>
+    <string name="mesh_state_stopping">Stopping mesh</string>
+    <string name="mesh_state_unavailable">Mesh unavailable</string>
+    <string name="mesh_stop_action">Stop</string>
     <string name="onboarding_title">Before connecting</string>
     <string name="onboarding_intro">aoheyra needs a few Android permissions before it can use Bluetooth. Each step explains why, and every choice can be changed later in Android settings.</string>
     <string name="permissions_ready">Permissions are ready. The mesh starts when the runtime is connected.</string>
