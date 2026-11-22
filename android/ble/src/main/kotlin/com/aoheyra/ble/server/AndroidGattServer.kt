@@ -134,8 +134,7 @@ class AndroidGattServer(
                         val characteristic = tx
                         val gattServer = server
                         if (characteristic != null && gattServer != null) {
-                            characteristic.value = result.bytes
-                            gattServer.notifyCharacteristicChanged(device, characteristic, false)
+                            notifyQuietly(gattServer, device, characteristic, result.bytes)
                         }
                     }
                 }
@@ -186,12 +185,24 @@ class AndroidGattServer(
         val device = devices[peer] ?: return Result.failure(BleError.LinkUnknown)
         val characteristic = tx ?: return Result.failure(BleError.RadioUnavailable)
         val gattServer = server ?: return Result.failure(BleError.RadioUnavailable)
-        characteristic.value = bytes.copyOf()
-        return if (gattServer.notifyCharacteristicChanged(device, characteristic, false)) {
+        return if (notifyQuietly(gattServer, device, characteristic, bytes)) {
             Result.success(Unit)
         } else {
             Result.failure(BleError.Refused(Stage.WRITE, -1))
         }
+    }
+
+    /** A revoked permission leaves no live link to notify; report refusal. */
+    private fun notifyQuietly(
+        gattServer: BluetoothGattServer,
+        device: BluetoothDevice,
+        characteristic: BluetoothGattCharacteristic,
+        bytes: ByteArray,
+    ): Boolean = try {
+        characteristic.value = bytes.copyOf()
+        gattServer.notifyCharacteristicChanged(device, characteristic, false)
+    } catch (security: SecurityException) {
+        false
     }
 
     /** Reports a Rust disconnect as a cancel for an inbound central. */
