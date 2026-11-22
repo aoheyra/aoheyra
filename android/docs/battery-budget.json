@@ -1,0 +1,28 @@
+{
+  "defaultProfile": "balanced",
+  "targetPercentPerHour": 3.0,
+  "runHours": [1, 8, 24],
+  "profiles": {
+    "balanced": {
+      "scanWindowMs": 4000,
+      "scanIntervalMs": 12000,
+      "advertiseIntervalMs": 1000,
+      "syncDwellMs": 3000,
+      "maxContinuousWakeMs": 30000
+    },
+    "low_power": {
+      "scanWindowMs": 2000,
+      "scanIntervalMs": 20000,
+      "advertiseIntervalMs": 3000,
+      "syncDwellMs": 1500,
+      "maxContinuousWakeMs": 15000
+    },
+    "performance": {
+      "scanWindowMs": 4000,
+      "scanIntervalMs": 8000,
+      "advertiseIntervalMs": 1000,
+      "syncDwellMs": 5000,
+      "maxContinuousWakeMs": 60000
+    }
+  }
+}
