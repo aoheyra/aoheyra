@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">aoheyra</string>
+    <!-- Not translatable: the product name is identical in every language. -->
+    <string name="app_name" translatable="false">aoheyra</string>
+
+    <!-- Translators: channel names appear in Android's notification settings. -->
+    <string name="channel_mesh_service_name">Mesh connection</string>
+    <string name="channel_mesh_service_description">Keeps nearby phones connected so messages can be carried. No message content is shown.</string>
+    <string name="channel_messages_name">Messages</string>
+    <string name="channel_messages_description">Alerts for delivered messages. The alert never contains the message text.</string>
+    <string name="channel_location_sharing_name">Location sharing</string>
+    <string name="channel_location_sharing_description">Shows that a location-sharing session is active and offers a one-tap stop.</string>
+
+    <!-- Translators: content descriptions are read aloud by screen readers. -->
+    <string name="cd_core_screen">aoheyra main screen</string>
+    <string name="core_title">Mesh messaging</string>
+    <string name="core_status">Status appears here when the runtime is connected.</string>
 </resources>
