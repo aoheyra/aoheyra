@@ -15,4 +15,27 @@
     <string name="cd_core_screen">aoheyra main screen</string>
     <string name="core_title">Mesh messaging</string>
     <string name="core_status">Status appears here when the runtime is connected.</string>
+
+    <!-- AND-20 onboarding help. Translators: "apps" means Android app settings. -->
+    <string name="oem_vendor_pixel">Pixel</string>
+    <string name="oem_vendor_samsung">Samsung</string>
+    <string name="oem_vendor_xiaomi">Xiaomi</string>
+    <string name="oem_vendor_oneplus">Oppo or OnePlus</string>
+    <string name="oem_vendor_other">Other Android device</string>
+
+    <string name="oem_common_permissions_title">Allow nearby devices</string>
+    <string name="oem_common_permissions_detail">This app needs nearby-device permission to find people around you. Denying it stops the mesh; you can change it in Android Settings at any time.</string>
+    <string name="oem_common_battery_title">Background relaying and battery</string>
+    <string name="oem_common_battery_detail">Carrying messages for other people uses the radio while the screen is off. Android and some vendors limit that. You decide whether to allow it; limiting it saves battery but stops relaying until you reopen the app.</string>
+    <string name="oem_pixel_title">Pixel: check battery optimisation</string>
+    <string name="oem_pixel_detail">If relaying stops with the screen off, open Android Settings, select Apps, select aoheyra, and check the battery optimisation entry after each OS update.</string>
+    <string name="oem_samsung_title">Samsung: check Sleeping apps</string>
+    <string name="oem_samsung_detail">If relaying stops with the screen off, check Settings, Device care, Battery, Sleeping apps, and keep aoheyra out of the sleeping list if you want it to relay in the background.</string>
+    <string name="oem_xiaomi_title">Xiaomi: check Autostart</string>
+    <string name="oem_xiaomi_detail">If relaying stops with the screen off, check the app's Autostart and background-activity settings in the vendor's Security app, then reopen aoheyra.</string>
+    <string name="oem_oneplus_title">Oppo and OnePlus: check background activity</string>
+    <string name="oem_oneplus_detail">If relaying stops with the screen off, check the app's background-activity and aggressive-battery settings in Settings, then reopen aoheyra.</string>
+    <string name="oem_other_title">Older or unknown devices</string>
+    <string name="oem_other_detail">If relaying stops with the screen off, look in Android Settings for background-data and battery restrictions for aoheyra. The exact menu depends on the device and Android version.</string>
+    <string name="cd_oem_help_list">Vendor-specific steps for keeping the mesh running</string>
 </resources>
