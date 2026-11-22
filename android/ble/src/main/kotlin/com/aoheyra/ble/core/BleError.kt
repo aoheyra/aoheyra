@@ -26,6 +26,12 @@ sealed class BleError(message: String) : Exception(message) {
     /** Rust or the peer requested the close. */
     object Requested : BleError("link close requested")
 
+    /** A status 133 cooldown is active; Rust may retry later. */
+    object Backoff : BleError("connect attempt is in backoff")
+
+    /** Discovery did not find RX and TX. */
+    object ServiceMissing : BleError("GATT service is missing")
+
     /** No registry entry exists for a link. */
     object LinkUnknown : BleError("link is unknown")
 

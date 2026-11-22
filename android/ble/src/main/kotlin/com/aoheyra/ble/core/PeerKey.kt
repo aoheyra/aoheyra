@@ -13,7 +13,13 @@ class PeerKey private constructor(val bytes: ByteArray) {
     /** Returns a defensive copy for passing to platform APIs. */
     fun copy(): ByteArray = bytes.copyOf()
 
+    /** The six LE address bytes in NET-03 order, for `getRemoteDevice`. */
+    fun addressBytes(): ByteArray = bytes.copyOfRange(0, ADDRESS_LENGTH)
+
     companion object {
+        /** Length of a BLE address. */
+        const val ADDRESS_LENGTH: Int = 6
+
         /** Required length of a peer key. */
         const val LENGTH: Int = 16
 

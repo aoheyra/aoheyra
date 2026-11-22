@@ -10,6 +10,9 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
 
+    <!-- GATT client and server calls need CONNECT on API 31+. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
     <!-- Scan results are beacons, not location; no location permission on API 31+. -->
     <uses-permission
         android:name="android.permission.ACCESS_COARSE_LOCATION"
