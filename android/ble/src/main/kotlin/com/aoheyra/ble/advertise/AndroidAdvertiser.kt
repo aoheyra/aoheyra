@@ -3,6 +3,7 @@ package com.aoheyra.ble.advertise
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.BluetoothLeAdvertiser
 import android.bluetooth.le.AdvertiseSettings
 import android.os.ParcelUuid
 import com.aoheyra.ble.core.BleError
@@ -22,7 +23,7 @@ class AndroidAdvertiser(
         connectable: Boolean,
     ): BleResult<Unit> {
         val advertiser = currentAdvertiser() ?: return Result.failure(BleError.RadioUnavailable)
-        callback?.let(advertiser::stopAdvertising)
+        callback?.let { stopQuietly(advertiser, it) }
 
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(mode.toAndroid())
@@ -61,9 +62,22 @@ class AndroidAdvertiser(
 
     override fun stop(): BleResult<Unit> {
         val advertiser = currentAdvertiser() ?: return Result.failure(BleError.RadioUnavailable)
-        callback?.let { advertiser.stopAdvertising(it) }
+        callback?.let { stopQuietly(advertiser, it) }
         callback = null
         return Result.success(Unit)
+    }
+
+    /**
+     * Stopping an advertiser we no longer hold is a no-op. A revoked
+     * permission means advertising is already gone, so the typed result stays
+     * successful and the platform refusal is explicitly handled here.
+     */
+    private fun stopQuietly(advertiser: BluetoothLeAdvertiser, cb: AdvertiseCallback) {
+        try {
+            advertiser.stopAdvertising(cb)
+        } catch (security: SecurityException) {
+            Unit
+        }
     }
 
     private fun currentAdvertiser() =
