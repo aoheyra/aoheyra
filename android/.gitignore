@@ -7,5 +7,6 @@ captures/
 .externalNativeBuild/
 .cxx/
 app/src/main/jniLibs/
+oem-evidence/
 __pycache__/
 *.pyc
