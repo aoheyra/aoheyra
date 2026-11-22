@@ -36,7 +36,7 @@ class ForegroundMeshService : Service() {
         return when (action) {
             MeshServiceLauncher.ACTION_STOP -> stopMesh()
             MeshServiceLauncher.ACTION_STATE -> {
-                stateFrom(intent)?.let(::show)
+                intent?.let(::stateFrom)?.let(::show)
                 MeshRestartPolicy.forStart(stopFlag.isStopped())
             }
 
