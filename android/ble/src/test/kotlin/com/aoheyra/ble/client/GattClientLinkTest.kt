@@ -3,6 +3,7 @@ package com.aoheyra.ble.client
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.LinkId
 import com.aoheyra.ble.core.PeerKey
+import com.aoheyra.ble.core.Stage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
