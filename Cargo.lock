@@ -27,24 +27,6 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 [[package]]
 name = "ao_idents"
 version = "0.1.0"
-source = "git+https://github.com/aoheyra/aoIdents?tag=v0.1.0#8fb173690ba4ade2b80f0459c40e7198bd0eb9ac"
-dependencies = [
- "argon2",
- "blake3",
- "chacha20poly1305",
- "ed25519-dalek",
- "hkdf",
- "rand_core 0.6.4",
- "sha2",
- "snow",
- "subtle",
- "x25519-dalek",
- "zeroize",
-]
-
-[[package]]
-name = "ao_idents"
-version = "0.1.0"
 source = "git+https://github.com/aoheyra/aoIdents#63dac7131fd339e851cec2ef4662aaeb25c0200e"
 dependencies = [
  "argon2",
@@ -63,21 +45,12 @@ dependencies = [
 [[package]]
 name = "ao_mesh"
 version = "0.1.0"
-source = "git+https://github.com/aoheyra/aoMesh?tag=v0.1.0#0e9c36a38938412d993e0eea57df9b8a0d76c92f"
+source = "git+https://github.com/aoheyra/aoMesh#2107e353442f6c72e9ff1395dd838f6147af9551"
 dependencies = [
- "ao_idents 0.1.0 (git+https://github.com/aoheyra/aoIdents)",
- "ao_network 0.1.0 (git+https://github.com/aoheyra/aoNetwork)",
+ "ao_idents",
+ "ao_network",
  "blake3",
  "rand_core 0.9.5",
-]
-
-[[package]]
-name = "ao_network"
-version = "0.1.0"
-source = "git+https://github.com/aoheyra/aoNetwork?tag=v0.1.0#84f84eadfdaf2134b839b4d5dceeeeacdbf914a0"
-dependencies = [
- "thiserror",
- "tracing",
 ]
 
 [[package]]
@@ -93,9 +66,9 @@ dependencies = [
 name = "aoheyra"
 version = "0.1.0"
 dependencies = [
- "ao_idents 0.1.0 (git+https://github.com/aoheyra/aoIdents?tag=v0.1.0)",
+ "ao_idents",
  "ao_mesh",
- "ao_network 0.1.0 (git+https://github.com/aoheyra/aoNetwork?tag=v0.1.0)",
+ "ao_network",
  "rusqlite",
  "uniffi",
 ]

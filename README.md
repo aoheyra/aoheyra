@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded, consumes tagged sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -140,6 +140,8 @@ settings. Kotlin supplies the 32-byte database key from the Android Keystore;
 it never keeps its own database. WAL is enabled, one writer task owns all
 writes and a bounded pool of read-only connections serves queries. Migrations
 are versioned and tested from an empty file and from the previous schema.
+`SqliteMessageStore` implements aoMesh's durable store on the same tables; it
+runs aoMesh's shared conformance suite and uses single-statement quota checks.
 Android auto-backup is excluded. See [`docs/storage.md`](docs/storage.md).
 
 ## Build
@@ -171,7 +173,7 @@ them.
 
 ### Sibling crates during development
 
-Sibling crates are pinned to the `v0.1.0` git tag in `crates/aoheyra/Cargo.toml`. To co-develop locally, add an `[patch]` override in an **uncommitted** `.cargo/config.toml`; the exact paths and the rule that it must never be committed are documented in [docs/local-development.md](docs/local-development.md). A PR must resolve with the committed tags and no local patches.
+Sibling crates are consumed as untagged git sources on their default branches in `crates/aoheyra/Cargo.toml`, matching aoMesh's own manifest. There are no release tags yet; the first tags start at `v0.1.0` and all crates will move to them together when they are cut. Cargo treats a tagged source as a different identity from an untagged one, so a mismatch duplicates `Identity`, `LinkId` and `NodeId` types across the seam. To co-develop locally, add an `[patch]` override in an **uncommitted** `.cargo/config.toml`; the exact paths and the rule that it must never be committed are documented in [docs/local-development.md](docs/local-development.md). A PR must resolve with the committed untagged sources and no local patches.
 
 ## Milestones and issues
 
@@ -219,11 +221,11 @@ These become the integration suite (APP-17) and the field-test script (AND-23).
 
 ## Open decisions and risks
 
-- **Sibling API stability:** the three siblings are pinned to `v0.1.0`; changes to their public APIs require a new tag here.
+- **Sibling API stability:** the three siblings are untagged pre-release sources; API changes land in their repositories and are consumed here without a tag bump.
 - **Relay-visible metadata** in the MVP (see MSH-02, IDN-19).
 - **Forward secrecy** deferred to IDN-15; the threat model says so plainly.
 - **Android connection limits and OEM background kills** are unknown until AND-02 and AND-20; aoNetwork defaults may change.
-- **Cross-repo versioning** by git tag plus local `[patch]` needs discipline; revisit if friction grows (APP-01).
+- **Cross-repo versioning** uses matching untagged sources until the first `v0.1.0` tags, then one coordinated tag bump across all crates (APP-01).
 - **minSdk** proposed 26; confirm against the spike.
 
 ## Contributing
