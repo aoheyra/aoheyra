@@ -91,6 +91,9 @@ pub mod channels;
 /// Privacy-preserving, deterministic diagnostics archive (APP-15).
 pub mod diagnostics;
 
+/// Retention, panic wipe and encrypted backup/restore policy (APP-16).
+pub mod lifecycle;
+
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

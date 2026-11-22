@@ -64,3 +64,6 @@ rand = "0.9"
 # aoIdents seals on the rand_core 0.6 trait line; rand 0.8 supplies a seeded
 # CSPRNG for deterministic two-instance tests.
 rand08 = { package = "rand", version = "0.8" }
+# Test-only seed buffer guard: the lifecycle tests mirror the host keystore's
+# zeroising contract without adding a production dependency.
+zeroize = "1"
