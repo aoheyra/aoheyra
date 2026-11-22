@@ -1,0 +1,22 @@
+{
+  "sessionId": "short-m3-template",
+  "phase": "M3_SHORT",
+  "scenario": "outdoor",
+  "buildCommit": null,
+  "deviceCount": null,
+  "devices": [],
+  "startedUtc": null,
+  "endedUtc": null,
+  "diagnosticsBundleIds": [],
+  "degreeCapConfigured": null,
+  "messages": [],
+  "degreeSamples": [],
+  "battery": {
+    "startPercent": null,
+    "endPercent": null,
+    "hours": null
+  },
+  "defects": [],
+  "status": "PLANNED",
+  "notes": "Template only. Synthetic traffic and the diagnostics bundle ids must be recorded here after the run."
+}
