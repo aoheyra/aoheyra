@@ -38,4 +38,39 @@
     <string name="oem_other_title">Older or unknown devices</string>
     <string name="oem_other_detail">If relaying stops with the screen off, look in Android Settings for background-data and battery restrictions for aoheyra. The exact menu depends on the device and Android version.</string>
     <string name="cd_oem_help_list">Vendor-specific steps for keeping the mesh running</string>
+
+    <string name="onboarding_title">Before connecting</string>
+    <string name="onboarding_intro">aoheyra needs a few Android permissions before it can use Bluetooth. Each step explains why, and every choice can be changed later in Android settings.</string>
+    <string name="permissions_ready">Permissions are ready. The mesh starts when the runtime is connected.</string>
+    <string name="notice_settings_unavailable">Android settings could not be opened. You can change this permission from the system Settings app.</string>
+
+    <string name="capability_bluetooth">Nearby devices</string>
+    <string name="capability_location">Location</string>
+    <string name="capability_notifications">Notifications</string>
+    <string name="capability_battery">Battery</string>
+
+    <string name="explain_bluetooth">Nearby-device permission lets aoheyra scan for, advertise to and connect with nearby phones. Bluetooth beacons are used only to break ties between duplicate links, not to find your location.</string>
+    <string name="explain_location">On Android 11 and older, Bluetooth scanning requires location permission. aoheyra uses it to discover nearby BLE phones; it does not build a location history.</string>
+    <string name="explain_notifications">An ongoing notification keeps the mesh state visible while the app is in the background.</string>
+    <string name="explain_system">This system setting affects whether the mesh can keep running in the background.</string>
+
+    <string name="issue_first_title">Allow %1$s</string>
+    <string name="issue_first_body">%1$s Tap Continue to review the Android prompt. Nothing is enabled before you grant it.</string>
+    <string name="issue_denied_title">%1$s was denied</string>
+    <string name="issue_denied_body">%1$s Tap Try again to see the Android prompt once more.</string>
+    <string name="issue_permanent_title">%1$s is blocked</string>
+    <string name="issue_permanent_body">%1$s Android will not show the prompt again. Open app settings to allow it.</string>
+
+    <string name="issue_bluetooth_off_title">Bluetooth is off</string>
+    <string name="issue_bluetooth_off_body">Turn Bluetooth on to scan for and connect with nearby phones.</string>
+    <string name="issue_location_off_title">Location services are off</string>
+    <string name="issue_location_off_body">Android 11 and older need location services on for BLE scanning. Turn them on to find nearby phones.</string>
+    <string name="issue_battery_title">Battery optimisation may stop the mesh</string>
+    <string name="issue_battery_body">You can exempt aoheyra from battery optimisation in app settings. This is optional; the mesh may be paused while the screen is off if you leave it on.</string>
+
+    <string name="action_review_permission">Continue</string>
+    <string name="action_app_settings">Open app settings</string>
+    <string name="action_bluetooth_settings">Open Bluetooth settings</string>
+    <string name="action_location_settings">Open location settings</string>
+    <string name="action_battery_settings">Open battery settings</string>
 </resources>

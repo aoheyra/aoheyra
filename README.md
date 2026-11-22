@@ -185,6 +185,13 @@ The host submits the prepared packets through the merged runtime. Receiving
 authenticates seals, checks header ids, sender, session and sequence, then
 stores one latest position per peer; it never reads a clock or opens a radio.
 
+## Android permissions
+
+The first-run onboarding gate and its recovery paths are described in
+[`docs/android-permissions.md`](docs/android-permissions.md). The app asks for
+nearby-device permissions on Android 12+, location on older versions and
+notifications on Android 13+; BLE scans declare `neverForLocation`.
+
 Key decisions (APP-02), recorded as short ADRs:
 
 1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
