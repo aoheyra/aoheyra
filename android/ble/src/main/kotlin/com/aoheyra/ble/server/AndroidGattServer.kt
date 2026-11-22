@@ -10,7 +10,6 @@ import android.bluetooth.BluetoothGattServerCallback
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.os.Handler
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.BleResult
 import com.aoheyra.ble.core.BleThread
@@ -25,38 +24,42 @@ class AndroidGattServer(
     private val host: GattServerHost,
     private val bleThread: BleThread,
 ) {
+    // Keep only the application context beyond construction; the platform
+    // needs it to open the server, while holding the activity would leak it.
+    private val appContext: Context = context.applicationContext
     private val manager: BluetoothManager? =
-        context.getSystemService(BluetoothManager::class.java)
+        appContext.getSystemService(BluetoothManager::class.java)
     private val devices = mutableMapOf<PeerKey, BluetoothDevice>()
     private var server: BluetoothGattServer? = null
     private var tx: BluetoothGattCharacteristic? = null
     private val callback = object : BluetoothGattServerCallback() {
+        // openGattServer's two-argument form calls back on a platform thread.
+        // Re-post every callback so host state is touched only on the BLE thread.
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
-            val peer = peerOf(device) ?: return
-            if (status == BluetoothGatt.GATT_SUCCESS &&
-                newState == BluetoothGatt.STATE_CONNECTED
-            ) {
-                devices[peer] = device
-                host.onCentralConnected(peer)
-                return
-            }
-            devices.remove(peer)
-            val error = if (status == BluetoothGatt.GATT_SUCCESS) {
-                BleError.Requested
-            } else {
-                BleError.Gatt(Stage.CONNECT, status)
-            }
-            host.onCentralDisconnected(peer, error)
+            bleThread.post(Runnable {
+                val peer = peerOf(device) ?: return@Runnable
+                if (status == BluetoothGatt.GATT_SUCCESS &&
+                    newState == BluetoothGatt.STATE_CONNECTED
+                ) {
+                    devices[peer] = device
+                    host.onCentralConnected(peer)
+                    return@Runnable
+                }
+                devices.remove(peer)
+                val error = if (status == BluetoothGatt.GATT_SUCCESS) {
+                    BleError.Requested
+                } else {
+                    BleError.Gatt(Stage.CONNECT, status)
+                }
+                host.onCentralDisconnected(peer, error)
+            })
         }
 
-        override fun onMtuChanged(device: BluetoothDevice, mtu: Int, status: Int) {
-            val peer = peerOf(device) ?: return
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                devices.remove(peer)
-                host.onCentralDisconnected(peer, BleError.Gatt(Stage.DISCOVER, status))
-                return
-            }
-            host.onMtuChanged(peer, mtu)
+        override fun onMtuChanged(device: BluetoothDevice, mtu: Int) {
+            bleThread.post(Runnable {
+                val peer = peerOf(device) ?: return@Runnable
+                host.onMtuChanged(peer, mtu)
+            })
         }
 
         override fun onCharacteristicWriteRequest(
@@ -68,20 +71,22 @@ class AndroidGattServer(
             offset: Int,
             value: ByteArray,
         ) {
-            val peer = peerOf(device) ?: return
-            val accepted = characteristic.uuid == GattUuids.RX &&
-                host.onRxWrite(peer, value, preparedWrite, offset).isSuccess
-            val status = if (accepted) {
-                BluetoothGatt.GATT_SUCCESS
-            } else {
-                BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
-            }
-            if (responseNeeded) {
-                server?.sendResponse(device, requestId, status, offset, null)
-            }
-            if (!accepted) {
-                cancel(device, peer, BleError.PeerMisbehaved)
-            }
+            bleThread.post(Runnable {
+                val peer = peerOf(device) ?: return@Runnable
+                val accepted = characteristic.uuid == GattUuids.RX &&
+                    host.onRxWrite(peer, value, preparedWrite, offset).isSuccess
+                val status = if (accepted) {
+                    BluetoothGatt.GATT_SUCCESS
+                } else {
+                    BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
+                }
+                if (responseNeeded) {
+                    server?.sendResponse(device, requestId, status, offset, null)
+                }
+                if (!accepted) {
+                    cancel(device, peer, BleError.PeerMisbehaved)
+                }
+            })
         }
 
         override fun onDescriptorWriteRequest(
@@ -93,44 +98,48 @@ class AndroidGattServer(
             offset: Int,
             value: ByteArray,
         ) {
-            val peer = peerOf(device) ?: return
-            val accepted = descriptor.uuid == GattUuids.CCCD &&
-                !preparedWrite &&
-                offset == 0 &&
-                value.size >= 2 &&
-                host.onCccdWritten(peer, cccdValue(value)).isSuccess
-            val status = if (accepted) {
-                BluetoothGatt.GATT_SUCCESS
-            } else {
-                BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
-            }
-            if (responseNeeded) {
-                server?.sendResponse(device, requestId, status, offset, null)
-            }
-            if (!accepted) {
-                cancel(device, peer, BleError.PeerMisbehaved)
-            }
+            bleThread.post(Runnable {
+                val peer = peerOf(device) ?: return@Runnable
+                val accepted = descriptor.uuid == GattUuids.CCCD &&
+                    !preparedWrite &&
+                    offset == 0 &&
+                    value.size >= 2 &&
+                    host.onCccdWritten(peer, cccdValue(value)).isSuccess
+                val status = if (accepted) {
+                    BluetoothGatt.GATT_SUCCESS
+                } else {
+                    BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
+                }
+                if (responseNeeded) {
+                    server?.sendResponse(device, requestId, status, offset, null)
+                }
+                if (!accepted) {
+                    cancel(device, peer, BleError.PeerMisbehaved)
+                }
+            })
         }
 
         override fun onNotificationSent(device: BluetoothDevice, status: Int) {
-            val peer = peerOf(device) ?: return
-            when (
-                val result = host.onNotificationSent(
-                    peer,
-                    status == BluetoothGatt.GATT_SUCCESS,
-                    status,
-                )
-            ) {
-                NotificationSend.None -> Unit
-                is NotificationSend.Send -> {
-                    val characteristic = tx
-                    val gattServer = server
-                    if (characteristic != null && gattServer != null) {
-                        characteristic.value = result.bytes
-                        gattServer.notifyCharacteristicChanged(device, characteristic, false)
+            bleThread.post(Runnable {
+                val peer = peerOf(device) ?: return@Runnable
+                when (
+                    val result = host.onNotificationSent(
+                        peer,
+                        status == BluetoothGatt.GATT_SUCCESS,
+                        status,
+                    )
+                ) {
+                    NotificationSend.None -> Unit
+                    is NotificationSend.Send -> {
+                        val characteristic = tx
+                        val gattServer = server
+                        if (characteristic != null && gattServer != null) {
+                            characteristic.value = result.bytes
+                            gattServer.notifyCharacteristicChanged(device, characteristic, false)
+                        }
                     }
                 }
-            }
+            })
         }
     }
 
@@ -139,10 +148,11 @@ class AndroidGattServer(
         if (server != null) return Result.success(Unit)
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter?.isEnabled != true) return Result.failure(BleError.RadioUnavailable)
-        val handler = bleThread.gattCallbackHandler() as? Handler
-            ?: return Result.failure(BleError.RadioUnavailable)
-        val opened = manager?.openGattServer(context, callback, handler)
-            ?: return Result.failure(BleError.RadioUnavailable)
+        val opened = try {
+            manager?.openGattServer(appContext, callback)
+        } catch (security: SecurityException) {
+            return Result.failure(BleError.RadioUnavailable)
+        } ?: return Result.failure(BleError.RadioUnavailable)
         val service = BluetoothGattService(GattUuids.SERVICE, BluetoothGattService.SERVICE_TYPE_PRIMARY)
         val rx = BluetoothGattCharacteristic(
             GattUuids.RX,

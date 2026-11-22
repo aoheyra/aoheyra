@@ -85,7 +85,8 @@ class GattServerHost(
                 }
                 val registered = links.registerPeripheral(link, peer)
                 if (registered.isFailure) {
-                    val error = registered.exceptionOrNull() ?: BleError.TooManyLinks
+                    val error = registered.exceptionOrNull() as? BleError
+                        ?: BleError.TooManyLinks
                     states.remove(peer)
                     events.onRegistrationFailed(peer, error)
                     return registered
