@@ -14,9 +14,23 @@
 //! The contacts module owns QR onboarding, trust, key-change alerts and the
 //! send gate. It stays generic over aoIdents' `ContactStore` seam and never
 //! persists contacts itself.
+//!
+//! The settings module validates user-facing values and maps them onto
+//! aoNetwork, aoMesh, store limits and the runtime config. It never reads a
+//! clock or radio state.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+
+/// Validated app settings and their mapping onto sibling configs (APP-11).
+pub mod settings;
+
+pub use settings::{
+    AppSettings, BatteryProfile, DEFAULT_MAX_LINKS, DEFAULT_STORE_QUOTA_BYTES, LocationPrecision,
+    MAX_MAX_LINKS, MAX_STORE_QUOTA_BYTES, MIN_MAX_LINKS, MIN_STORE_QUOTA_BYTES, MappedConfig,
+    PrivacyConfig, RuntimeSettings, SettingKey, SettingsChange, SettingsError, SettingsEvent,
+    SettingsService,
+};
 
 /// QR onboarding, trust, key-change alerts and the send gate (APP-10).
 pub mod contacts;
@@ -76,6 +90,8 @@ pub mod release;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
+
     use ao_idents::{
         ContactUpdate, Identity, IdentityCard, MemoryContactStore, RotationStatement,
         SealedMessage, Trust,
@@ -440,6 +456,156 @@ mod tests {
         assert_eq!(
             alice_service.can_send(bob_id),
             Err(ContactsError::ContactBlocked(bob_id))
+        );
+    }
+
+    #[test]
+    fn out_of_range_settings_are_rejected_with_a_message() {
+        let error = AppSettings::new(
+            0,
+            true,
+            DEFAULT_STORE_QUOTA_BYTES,
+            BatteryProfile::Balanced,
+            true,
+            LocationPrecision::Off,
+        )
+        .expect_err("zero links is rejected");
+        assert_eq!(
+            error,
+            SettingsError::MaxLinks {
+                value: 0,
+                min: MIN_MAX_LINKS,
+                max: MAX_MAX_LINKS,
+            }
+        );
+        assert!(error.to_string().contains("max links 0 outside 1..=32"));
+
+        let mut service = SettingsService::new(AppSettings::default());
+        let before = *service.settings();
+        let error = service
+            .update(SettingsChange::StoreQuotaBytes(1024))
+            .expect_err("small quota is rejected");
+        assert_eq!(
+            error,
+            SettingsError::StoreQuota {
+                value: 1024,
+                min: MIN_STORE_QUOTA_BYTES,
+                max: MAX_STORE_QUOTA_BYTES,
+            }
+        );
+        assert!(error.to_string().contains("store quota 1024 bytes outside"));
+        assert_eq!(*service.settings(), before);
+    }
+
+    #[test]
+    fn max_links_and_store_quota_change_mapped_configs() {
+        let mut service = SettingsService::new(AppSettings::default());
+        let baseline = service.map().expect("baseline mapping");
+        assert_eq!(baseline.network.max_links(), DEFAULT_MAX_LINKS);
+        assert_eq!(baseline.store.total_bytes, DEFAULT_STORE_QUOTA_BYTES);
+
+        assert_eq!(
+            service
+                .update(SettingsChange::MaxLinks(3))
+                .expect("link cap applied"),
+            vec![SettingsEvent::Changed {
+                key: SettingKey::MaxLinks,
+            }]
+        );
+        let mapped = service.map().expect("link-cap mapping");
+        assert_eq!(mapped.network.max_links(), 3);
+
+        assert_eq!(
+            service
+                .update(SettingsChange::StoreQuotaBytes(1024 * 1024))
+                .expect("quota applied"),
+            vec![SettingsEvent::Changed {
+                key: SettingKey::StoreQuotaBytes,
+            }]
+        );
+        let mapped = service.map().expect("quota mapping");
+        assert_eq!(mapped.store.total_bytes, 1024 * 1024);
+        assert_eq!(mapped.store.entries, 128);
+        assert_eq!(mapped.store.per_origin_bytes, 128 * 1024);
+        assert_eq!(mapped.store.per_class_bytes[0], 1024 * 1024);
+        assert_eq!(mapped.store.per_class_bytes[1], 256 * 1024);
+    }
+
+    #[test]
+    fn relay_battery_and_privacy_settings_change_observable_behaviour() {
+        let mut service = SettingsService::new(AppSettings::default());
+        let baseline = service.map().expect("baseline mapping");
+        let runtime = baseline
+            .runtime
+            .to_runtime_config()
+            .expect("baseline maps to runtime config");
+        assert_eq!(runtime.event_capacity(), baseline.runtime.event_capacity());
+        assert_eq!(runtime.ttl(), baseline.runtime.ttl());
+        assert_eq!(runtime.lifetime_s(), baseline.runtime.lifetime_s());
+        assert!(baseline.beacon.relay_willing);
+        assert!(baseline.runtime.relay_willing());
+        assert!(!baseline.beacon.low_battery);
+        assert!(baseline.mesh.presence.enabled);
+        assert!(!baseline.privacy.allow_precise_coordinates());
+        assert_eq!(
+            baseline.network.discovery_interval(),
+            Duration::from_secs(10)
+        );
+
+        service
+            .update(SettingsChange::RelayEnabled(false))
+            .expect("relay off");
+        let mapped = service.map().expect("relay mapping");
+        assert!(!mapped.beacon.relay_willing);
+        assert!(!mapped.runtime.relay_willing());
+
+        service
+            .update(SettingsChange::BatteryProfile(BatteryProfile::PowerSaver))
+            .expect("power saver");
+        let mapped = service.map().expect("power-saver mapping");
+        assert_eq!(mapped.network.discovery_interval(), Duration::from_secs(30));
+        assert_eq!(mapped.network.keepalive_interval(), Duration::from_secs(60));
+        assert_eq!(mapped.runtime.event_capacity(), 16);
+        assert!(mapped.beacon.low_battery);
+
+        service
+            .update(SettingsChange::BatteryProfile(BatteryProfile::Performance))
+            .expect("performance");
+        let mapped = service.map().expect("performance mapping");
+        assert_eq!(mapped.network.discovery_interval(), Duration::from_secs(5));
+        assert_eq!(mapped.network.keepalive_interval(), Duration::from_secs(10));
+        assert_eq!(mapped.runtime.event_capacity(), 128);
+        assert!(!mapped.beacon.low_battery);
+
+        service
+            .update(SettingsChange::PresenceEnabled(false))
+            .expect("presence off");
+        let mapped = service.map().expect("presence mapping");
+        assert!(!mapped.mesh.presence.enabled);
+        assert!(!mapped.privacy.presence_enabled());
+
+        service
+            .update(SettingsChange::LocationPrecision(LocationPrecision::Coarse))
+            .expect("coarse location");
+        assert!(
+            !service
+                .map()
+                .expect("coarse mapping")
+                .privacy
+                .allow_precise_coordinates()
+        );
+
+        service
+            .update(SettingsChange::LocationPrecision(
+                LocationPrecision::Precise,
+            ))
+            .expect("precise location");
+        assert!(
+            service
+                .map()
+                .expect("precise mapping")
+                .privacy
+                .allow_precise_coordinates()
         );
     }
 }
