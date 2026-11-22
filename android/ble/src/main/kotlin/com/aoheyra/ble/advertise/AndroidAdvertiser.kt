@@ -46,10 +46,16 @@ class AndroidAdvertiser(
                 events.onStartFailure(errorCode)
             }
         }
-        // Android reports start failures through the callback, not a return
-        // value. Store it before starting so a synchronous failure is seen.
+        // Android reports asynchronous start failures through the callback,
+        // not a return value. Store it before starting, and clear it if the
+        // platform refuses the call synchronously, so no failure is lost.
         callback = next
-        advertiser.startAdvertising(settings, advertiseData, scanResponse, next)
+        try {
+            advertiser.startAdvertising(settings, advertiseData, scanResponse, next)
+        } catch (security: SecurityException) {
+            callback = null
+            return Result.failure(BleError.RadioUnavailable)
+        }
         return Result.success(Unit)
     }
 
