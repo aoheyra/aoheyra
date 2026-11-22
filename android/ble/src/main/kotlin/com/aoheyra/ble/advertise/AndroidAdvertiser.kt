@@ -1,0 +1,79 @@
+package com.aoheyra.ble.advertise
+
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.AdvertiseSettings
+import android.os.ParcelUuid
+import com.aoheyra.ble.core.BleError
+import com.aoheyra.ble.core.BleResult
+import java.util.UUID
+
+/** Android implementation of the advertiser; no protocol bytes are decoded. */
+class AndroidAdvertiser(
+    private val events: AdvertiseEvents,
+) : AdvertiseController {
+    private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+    private var callback: AdvertiseCallback? = null
+
+    override fun start(
+        beacon: ByteArray,
+        mode: AdvertisePower,
+        connectable: Boolean,
+    ): BleResult<Unit> {
+        val advertiser = currentAdvertiser() ?: return Result.failure(BleError.RadioUnavailable)
+        callback?.let(advertiser::stopAdvertising)
+
+        val settings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(mode.toAndroid())
+            .setConnectable(connectable)
+            .setTimeout(0)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+            .build()
+        val advertiseData = AdvertiseData.Builder()
+            .addServiceUuid(ParcelUuid(SERVICE_UUID))
+            .setIncludeDeviceName(false)
+            .setIncludeTxPowerLevel(false)
+            .build()
+        val scanResponse = AdvertiseData.Builder()
+            .addManufacturerData(MANUFACTURER_ID, beacon.copyOf())
+            .setIncludeDeviceName(false)
+            .setIncludeTxPowerLevel(false)
+            .build()
+
+        val next = object : AdvertiseCallback() {
+            override fun onStartFailure(errorCode: Int) {
+                events.onStartFailure(errorCode)
+            }
+        }
+        if (!advertiser.startAdvertising(settings, advertiseData, scanResponse, next)) {
+            return Result.failure(BleError.RadioUnavailable)
+        }
+        callback = next
+        return Result.success(Unit)
+    }
+
+    override fun stop(): BleResult<Unit> {
+        val advertiser = currentAdvertiser() ?: return Result.failure(BleError.RadioUnavailable)
+        callback?.let { advertiser.stopAdvertising(it) }
+        callback = null
+        return Result.success(Unit)
+    }
+
+    private fun currentAdvertiser() =
+        adapter?.takeIf { it.isEnabled }?.bluetoothLeAdvertiser
+
+    private fun AdvertisePower.toAndroid(): Int = when (this) {
+        AdvertisePower.LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+        AdvertisePower.BALANCED -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
+        AdvertisePower.LOW_LATENCY -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+    }
+
+    companion object {
+        /** Service UUID in the advertising data, from NET-03. */
+        val SERVICE_UUID: UUID = UUID.fromString("4c5b0001-108f-4105-a600-5a82e0fd7470")
+
+        /** Unregistered company id used for the raw beacon, from NET-03. */
+        const val MANUFACTURER_ID: Int = 0xFFFF
+    }
+}

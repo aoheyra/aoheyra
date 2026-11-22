@@ -14,6 +14,9 @@ sealed class BleError(message: String) : Exception(message) {
     /** A peer key is not the 16-byte radio key from the native contract. */
     object InvalidPeer : BleError("peer key must be 16 bytes")
 
+    /** A beacon is not the 16-byte value required by the native contract. */
+    object InvalidBeacon : BleError("beacon must be 16 bytes")
+
     /** No registry entry exists for a link. */
     object LinkUnknown : BleError("link is unknown")
 
