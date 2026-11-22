@@ -13,7 +13,7 @@ of the budget is [`battery-budget.json`](battery-budget.json); the script
 |---|---|---|---|---|---|
 | `balanced` (default) | 4000 ms / 12000 ms | 1000 ms | 3000 ms | 30000 ms | 3.0 % |
 | `low_power` | 2000 ms / 20000 ms | 3000 ms | 1500 ms | 15000 ms | 2.0 % |
-| `performance` | 8000 ms / 8000 ms | 1000 ms | 5000 ms | 60000 ms | 5.0 % |
+| `performance` | 4000 ms / 8000 ms | 1000 ms | 5000 ms | 60000 ms | 5.0 % |
 
 Profile values are initial engineering bounds, not values tuned from Battery
 Historian runs. They must be replaced in the same change that publishes real

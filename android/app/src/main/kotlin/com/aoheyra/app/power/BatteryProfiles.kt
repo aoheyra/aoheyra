@@ -62,7 +62,7 @@ object BatteryProfiles {
     )
     val performance = BatteryProfile(
         key = "performance",
-        scanWindowMs = 8_000L,
+        scanWindowMs = 4_000L,
         scanIntervalMs = 8_000L,
         advertiseIntervalMs = 1_000L,
         syncDwellMs = 5_000L,

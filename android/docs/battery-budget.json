@@ -18,7 +18,7 @@
       "maxContinuousWakeMs": 15000
     },
     "performance": {
-      "scanWindowMs": 8000,
+      "scanWindowMs": 4000,
       "scanIntervalMs": 8000,
       "advertiseIntervalMs": 1000,
       "syncDwellMs": 5000,
