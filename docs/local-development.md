@@ -1,8 +1,10 @@
 # Local development with sibling crates
 
-The committed `Cargo.toml` consumes aoMesh, aoNetwork and aoIdents by the
-`v0.1.0` git tag. CI and release builds must resolve that way with no local
-patches.
+The committed `Cargo.toml` consumes aoMesh, aoNetwork and aoIdents as untagged
+git sources on their default branches, matching aoMesh's own manifest. There
+are no release tags yet; the first tags start at `v0.1.0` and all crates will
+move to them together when they are cut. CI and release builds must resolve the
+committed untagged sources with no local patches.
 
 To work against uncommitted sibling changes, create an uncommitted
 `.cargo/config.toml` in this repository:
@@ -19,9 +21,10 @@ ao_idents = { path = "../aoIdents" }
 ```
 
 Adjust the paths to your checkout. Never commit this file or a `[patch]`
-section. Before opening a PR, move the sibling change to its own repository,
-land and tag it, bump the tag here, and delete the local override. A PR that
-depends on an untagged sibling change is blocked until the tag exists.
+section. Before opening a PR, land the sibling change on its default branch,
+refresh the lockfile here and delete the local override. A PR must build from
+the committed untagged sources. When release tags start at `v0.1.0`, all
+repositories change their pins together in one coordinated pass.
 
 ## Native libraries
 

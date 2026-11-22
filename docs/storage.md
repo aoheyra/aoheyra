@@ -1,4 +1,4 @@
-# Storage (APP-04)
+# Storage (APP-04 and APP-05)
 
 All app data lives in one SQLite database owned by the Rust core. Kotlin has no
 Room database and no authoritative cache (ADR 0001). The file is encrypted with
@@ -39,14 +39,44 @@ blobs. The app never interprets payload bytes here (APP-07 owns that schema).
 `mesh_store` mirrors aoMesh's `StoredMessage`: the complete wire packet plus
 local metadata (`copies_left`, `first_seen`, `received_at`, `priority`,
 `received_from`, `age_ms`) and derived `expires_at_ms` for single-statement
-expiry and quota queries (APP-05).
+expiry and quota queries.
+
+## Mesh store (APP-05)
+
+`SqliteMessageStore` implements aoMesh's `MessageStore` over the `mesh_store`
+table. It owns no second copy of packet bytes: lookups decode one row into an
+owned `StoredMessage`, and writes run on the single writer thread in one
+transaction. Live-row checks use `expires_at_ms > now`. Backend failures are
+mapped to `StoreError::Backend` with a typed operation and SQLite code; the
+infallible trait methods record the same failure on
+`SqliteMessageStore::last_backend_error` rather than hiding it.
+
+Local times and ages are encoded by flipping the sign bit before they are
+written to SQLite `INTEGER` columns. This preserves `u64` order and keeps the
+expiry and eviction indexes usable across the full range instead of overflowing
+at `i64::MAX`.
+
+Quota checks are single SQL statements: `SUM(size)` for total, per-origin and
+per-class bytes, and `COUNT(*)` for entries. Rows are never loaded just to
+count them. Eviction follows aoMesh's in-memory policy: expired entries first,
+then the first over-quota scope in origin, class, global order. Victims are
+ordered by `copies_left` ascending, `priority` descending, `first_seen` and
+`msg_id` ascending. Three eviction-order indexes cover the global, per-origin
+and per-class queries, so each 512-row chunk streams from an index instead of
+re-sorting the live table. Large stores delete up to 512 ordered victims per
+statement, so a 100k-row store does not issue 99k one-row deletes.
+
+The shared aoMesh conformance suite runs against this backend. The 100k-row
+eviction test seeds 100,000 live rows, inserts one more entry with a 1,000-entry
+limit, expects 99,001 deterministic removals and asserts a 60-second debug
+bound.
 
 ## Verification
 
 `cargo test` covers:
 
-- migrating an empty file to v2 and checking every table and index;
-- migrating a seeded v1 file to v2 and checking that all seven tables keep
+- migrating an empty file to v3 and checking every table and index;
+- migrating a seeded v1 file to v3 and checking that all seven tables keep
   their rows;
 - rejecting a schema version newer than this binary;
 - encrypted header bytes (not the `SQLite format 3` magic), rejection without

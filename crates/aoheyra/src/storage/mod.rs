@@ -17,10 +17,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 mod connection;
+mod message_store;
 mod migrations;
 mod reader;
 mod writer;
 
+pub use message_store::SqliteMessageStore;
 pub use migrations::SCHEMA_VERSION;
 
 /// Length of the raw AES key SQLCipher expects for a 256-bit key.
@@ -153,6 +155,18 @@ pub enum StorageError {
     EncryptionUnavailable,
     /// An internal reply from the writer had an unexpected type.
     InvalidWriterReply,
+    /// A stored node identifier was not 16 bytes.
+    InvalidNodeId,
+    /// A stored spray copy count did not fit the wire type.
+    InvalidCopiesLeft,
+    /// A stored scheduling priority did not fit the wire type.
+    InvalidPriority,
+    /// A stored row could not be rebuilt into a valid packet envelope.
+    InvalidStoredMessage,
+    /// An insertion collided with a live message id.
+    DuplicateStoredMessage,
+    /// A quota violation could not be relieved by deterministic eviction.
+    QuotaRejected,
 }
 
 impl fmt::Display for StorageError {
@@ -184,6 +198,12 @@ impl fmt::Display for StorageError {
                 f.write_str("SQLCipher encryption is not active on the database connection")
             }
             Self::InvalidWriterReply => f.write_str("database writer returned an unexpected type"),
+            Self::InvalidNodeId => f.write_str("stored node identifier has the wrong length"),
+            Self::InvalidCopiesLeft => f.write_str("stored spray copy count is out of range"),
+            Self::InvalidPriority => f.write_str("stored scheduling priority is out of range"),
+            Self::InvalidStoredMessage => f.write_str("stored packet row is invalid"),
+            Self::DuplicateStoredMessage => f.write_str("message id already exists"),
+            Self::QuotaRejected => f.write_str("store quota could not be satisfied"),
         }
     }
 }
