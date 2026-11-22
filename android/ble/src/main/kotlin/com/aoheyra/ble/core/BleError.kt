@@ -17,6 +17,15 @@ sealed class BleError(message: String) : Exception(message) {
     /** A beacon is not the 16-byte value required by the native contract. */
     object InvalidBeacon : BleError("beacon must be 16 bytes")
 
+    /** An ATT MTU is outside the 23..517 range from the native contract. */
+    object InvalidMtu : BleError("MTU must be between 23 and 517")
+
+    /** The remote central broke the peripheral procedure in NET-03. */
+    object PeerMisbehaved : BleError("peer violated the GATT procedure")
+
+    /** Rust or the peer requested the close. */
+    object Requested : BleError("link close requested")
+
     /** No registry entry exists for a link. */
     object LinkUnknown : BleError("link is unknown")
 

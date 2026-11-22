@@ -7,9 +7,9 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.bluetooth.le.BluetoothLeScanner
 import android.os.ParcelUuid
-import com.aoheyra.ble.advertise.AndroidAdvertiser
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.BleResult
+import com.aoheyra.ble.core.GattUuids
 import com.aoheyra.ble.core.PeerKey
 
 /** Android implementation of the service-UUID-filtered scanner. */
@@ -29,7 +29,7 @@ class AndroidScanner(
         callback?.let { stopQuietly(scanner, it) }
 
         val filter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(AndroidAdvertiser.SERVICE_UUID))
+            .setServiceUuid(ParcelUuid(GattUuids.SERVICE))
             .build()
         val settings = ScanSettings.Builder()
             .setScanMode(mode.toAndroid())

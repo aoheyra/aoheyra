@@ -8,7 +8,7 @@ import android.bluetooth.le.AdvertiseSettings
 import android.os.ParcelUuid
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.BleResult
-import java.util.UUID
+import com.aoheyra.ble.core.GattUuids
 
 /** Android implementation of the advertiser; no protocol bytes are decoded. */
 class AndroidAdvertiser(
@@ -32,7 +32,7 @@ class AndroidAdvertiser(
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
             .build()
         val advertiseData = AdvertiseData.Builder()
-            .addServiceUuid(ParcelUuid(SERVICE_UUID))
+            .addServiceUuid(ParcelUuid(GattUuids.SERVICE))
             .setIncludeDeviceName(false)
             .setIncludeTxPowerLevel(false)
             .build()
@@ -90,9 +90,6 @@ class AndroidAdvertiser(
     }
 
     companion object {
-        /** Service UUID in the advertising data, from NET-03. */
-        val SERVICE_UUID: UUID = UUID.fromString("4c5b0001-108f-4105-a600-5a82e0fd7470")
-
         /** Unregistered company id used for the raw beacon, from NET-03. */
         const val MANUFACTURER_ID: Int = 0xFFFF
     }
