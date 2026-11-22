@@ -31,3 +31,8 @@ ao_network = { git = "https://github.com/aoheyra/aoNetwork", tag = "v0.1.0" }
 # all use exactly the same UniFFI release. Newer releases require a higher MSRV
 # than this workspace's Rust 1.85.
 uniffi = "=0.29.4"
+# APP-04: SQLCipher is compiled from source (including its crypto provider) so
+# the same encrypted format is used on the host and every Android ABI without
+# a system libcrypto. Version 0.42 bundles sqlcipher-src 420.x, which carries
+# the patched SQLite for RUSTSEC-2026-0459. See the PR for the options compared.
+rusqlite = { version = "0.42", features = ["bundled-sqlcipher-vendored-openssl"] }

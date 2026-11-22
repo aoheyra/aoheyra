@@ -132,6 +132,16 @@ a native-contract violation, `EventQueueFull` when the bounded listener queue
 rejects an event, `CallbackFailed` for a failed callback, and `Closed` after
 shutdown.
 
+## Storage
+
+The Rust core keeps one SQLCipher-encrypted SQLite file for identity, contacts,
+conversations, messages, carried mesh packets, the directory cache and
+settings. Kotlin supplies the 32-byte database key from the Android Keystore;
+it never keeps its own database. WAL is enabled, one writer task owns all
+writes and a bounded pool of read-only connections serves queries. Migrations
+are versioned and tested from an empty file and from the previous schema.
+Android auto-backup is excluded. See [`docs/storage.md`](docs/storage.md).
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
