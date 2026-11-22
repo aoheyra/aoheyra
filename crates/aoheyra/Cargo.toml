@@ -13,7 +13,21 @@ path = "src/lib.rs"
 crate-type = ["lib", "cdylib"]
 doctest = true
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+default = []
+# Builds the pinned UniFFI CLI wrapper used by the Gradle binding task only.
+bindgen = ["uniffi/cli"]
+
 [dependencies]
 ao_idents = { git = "https://github.com/aoheyra/aoIdents", tag = "v0.1.0" }
 ao_mesh = { git = "https://github.com/aoheyra/aoMesh", tag = "v0.1.0" }
 ao_network = { git = "https://github.com/aoheyra/aoNetwork", tag = "v0.1.0" }
+# Pinned so the library scaffolding, CLI wrapper and Gradle-generated bindings
+# all use exactly the same UniFFI release. Newer releases require a higher MSRV
+# than this workspace's Rust 1.85.
+uniffi = "=0.29.4"
