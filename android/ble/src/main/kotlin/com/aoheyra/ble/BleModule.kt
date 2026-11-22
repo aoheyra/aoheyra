@@ -48,7 +48,7 @@ class BleModule(
     )
     private val scanner = Scanner(
         ScanPlanner(forwarder, clock),
-        AndroidScanner(forwarder, bleThread),
+        AndroidScanner(forwarder),
         executor,
     )
     private val client = GattClient(clientFactory, forwarder, links, ConnectBackoff(clock))
