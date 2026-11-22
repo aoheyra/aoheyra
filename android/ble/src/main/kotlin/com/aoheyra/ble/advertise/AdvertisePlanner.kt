@@ -41,7 +41,7 @@ class AdvertisePlanner(
         return synchronized(lock) {
             desiredBeacon = beacon?.copyOf()
             desiredMode = mode
-            planLocked(clock.nowMillis())
+            Result.success(planLocked(clock.nowMillis()))
         }
     }
 

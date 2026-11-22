@@ -46,10 +46,10 @@ class AndroidAdvertiser(
                 events.onStartFailure(errorCode)
             }
         }
-        if (!advertiser.startAdvertising(settings, advertiseData, scanResponse, next)) {
-            return Result.failure(BleError.RadioUnavailable)
-        }
+        // Android reports start failures through the callback, not a return
+        // value. Store it before starting so a synchronous failure is seen.
         callback = next
+        advertiser.startAdvertising(settings, advertiseData, scanResponse, next)
         return Result.success(Unit)
     }
 

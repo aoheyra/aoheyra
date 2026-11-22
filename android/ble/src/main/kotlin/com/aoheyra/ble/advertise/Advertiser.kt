@@ -43,13 +43,11 @@ class Advertiser(
         planner.onStartFailure(code)
     }
 
-    private fun apply(command: AdvertiseCommand): BleResult<Unit> {
-        when (command) {
-            AdvertiseCommand.Hold -> return Result.success(Unit)
-            AdvertiseCommand.Stop -> executor.execute(Runnable { controller.stop() })
-            is AdvertiseCommand.Start -> executor.execute(
-                Runnable { controller.start(command.beacon, command.mode, command.connectable) },
-            )
-        }
+    private fun apply(command: AdvertiseCommand): BleResult<Unit> = when (command) {
+        AdvertiseCommand.Hold -> Result.success(Unit)
+        AdvertiseCommand.Stop -> executor.execute(Runnable { controller.stop() })
+        is AdvertiseCommand.Start -> executor.execute(
+            Runnable { controller.start(command.beacon, command.mode, command.connectable) },
+        )
     }
 }
