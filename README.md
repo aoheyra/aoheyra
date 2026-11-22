@@ -140,6 +140,8 @@ settings. Kotlin supplies the 32-byte database key from the Android Keystore;
 it never keeps its own database. WAL is enabled, one writer task owns all
 writes and a bounded pool of read-only connections serves queries. Migrations
 are versioned and tested from an empty file and from the previous schema.
+`SqliteMessageStore` implements aoMesh's durable store on the same tables; it
+runs aoMesh's shared conformance suite and uses single-statement quota checks.
 Android auto-backup is excluded. See [`docs/storage.md`](docs/storage.md).
 
 ## Build

@@ -45,7 +45,7 @@ dependencies = [
 [[package]]
 name = "ao_mesh"
 version = "0.1.0"
-source = "git+https://github.com/aoheyra/aoMesh#f9e74023d57cb4c797e52d45791bd2e4570c1eea"
+source = "git+https://github.com/aoheyra/aoMesh#2107e353442f6c72e9ff1395dd838f6147af9551"
 dependencies = [
  "ao_idents",
  "ao_network",
