@@ -21,6 +21,7 @@ import com.aoheyra.ble.core.GattUuids
 import com.aoheyra.ble.core.PeerKey
 import com.aoheyra.ble.core.Stage
 import com.aoheyra.ble.scan.BluetoothAddress
+import com.aoheyra.ble.sink.GattServerController
 
 /**
  * Android GATT server host; all callbacks run on the single BLE thread.
@@ -35,7 +36,7 @@ class AndroidGattServer(
     context: Context,
     private val host: GattServerHost,
     private val bleThread: BleThread,
-) {
+) : GattServerController {
     // Keep only the application context beyond construction; the platform
     // needs it to open the server, while holding the activity would leak it.
     private val appContext: Context = context.applicationContext
@@ -155,7 +156,7 @@ class AndroidGattServer(
     }
 
     /** Opens the GATT server and installs the NET-03 service once. */
-    fun start(): BleResult<Unit> {
+    override fun start(): BleResult<Unit> {
         if (server != null) return Result.success(Unit)
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter?.isEnabled != true) return Result.failure(BleError.RadioUnavailable)
@@ -212,7 +213,7 @@ class AndroidGattServer(
     }
 
     /** Sends one raw notification; pacing is enforced by the host. */
-    fun send(peer: PeerKey, bytes: ByteArray): BleResult<Unit> {
+    override fun send(peer: PeerKey, bytes: ByteArray): BleResult<Unit> {
         val device = devices[peer] ?: return Result.failure(BleError.LinkUnknown)
         val characteristic = tx ?: return Result.failure(BleError.RadioUnavailable)
         val gattServer = server ?: return Result.failure(BleError.RadioUnavailable)
@@ -280,14 +281,14 @@ class AndroidGattServer(
     }
 
     /** Reports a Rust disconnect as a cancel for an inbound central. */
-    fun cancel(peer: PeerKey, status: BleError = BleError.Requested): BleResult<Unit> {
+    override fun cancel(peer: PeerKey, status: BleError = BleError.Requested): BleResult<Unit> {
         val device = devices[peer] ?: return Result.failure(BleError.LinkUnknown)
         cancel(device, peer, status)
         return Result.success(Unit)
     }
 
     /** Closes the server once; late callbacks find no device. */
-    fun stop() {
+    override fun stop() {
         val gattServer = server
         server = null
         tx = null

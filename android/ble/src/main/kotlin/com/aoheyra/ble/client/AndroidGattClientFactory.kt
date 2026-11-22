@@ -13,13 +13,14 @@ import com.aoheyra.ble.core.BleThread
 import com.aoheyra.ble.core.GattUuids
 import com.aoheyra.ble.core.LinkId
 import com.aoheyra.ble.core.PeerKey
+import com.aoheyra.ble.sink.PeerDirectory
 import java.util.concurrent.ConcurrentHashMap
 
 /** Android `BluetoothGatt` implementation; all operations stay serial. */
 class AndroidGattClientFactory(
     context: Context,
     private val bleThread: BleThread,
-) : GattHandleFactory {
+) : GattHandleFactory, PeerDirectory {
     private val appContext: Context = context.applicationContext
     private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val gattLinks = mutableMapOf<BluetoothGatt, LinkId>()
@@ -29,12 +30,12 @@ class AndroidGattClientFactory(
     var client: GattClient? = null
 
     /** Records the 16-byte radio peer for a Rust-allocated link. */
-    fun remember(link: LinkId, peer: PeerKey) {
+    override fun remember(link: LinkId, peer: PeerKey) {
         peerByLink[link] = peer
     }
 
     /** Forgets a closed link; late callbacks then find no peer. */
-    fun forget(link: LinkId) {
+    override fun forget(link: LinkId) {
         peerByLink.remove(link)
     }
 

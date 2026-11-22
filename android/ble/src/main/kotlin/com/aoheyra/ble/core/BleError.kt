@@ -20,6 +20,9 @@ sealed class BleError(message: String) : Exception(message) {
     /** An ATT MTU is outside the 23..517 range from the native contract. */
     object InvalidMtu : BleError("MTU must be between 23 and 517")
 
+    /** A write is longer than the 514-byte native contract limit. */
+    object InvalidWrite : BleError("write must be at most 514 bytes")
+
     /** The remote central broke the peripheral procedure in NET-03. */
     object PeerMisbehaved : BleError("peer violated the GATT procedure")
 
@@ -51,6 +54,15 @@ sealed class BleError(message: String) : Exception(message) {
 
     /** The adapter or permission state prevents the operation. */
     object RadioUnavailable : BleError("radio is unavailable")
+
+    /** The adapter turned off; the final close cause for every radio link. */
+    object RadioOff : BleError("radio is off")
+
+    /** BLE permission was revoked; the final close cause for every radio link. */
+    object PermissionDenied : BleError("BLE permission is denied")
+
+    /** The sink must be started before Rust-driven radio calls. */
+    object NotStarted : BleError("BLE sink is not started")
 }
 
 /** The GATT step a failure came from; mirrors NET-03 raw stage codes. */
