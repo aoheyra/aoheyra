@@ -126,6 +126,16 @@ Key decisions (APP-02), recorded as short ADRs:
 4. [Time and RNG are injected](docs/adr/0004-injected-time-and-rng.md); no shared utility crate unless a real duplication appears.
 5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
 
+## Storage
+
+The Rust core keeps one SQLCipher-encrypted SQLite file for identity, contacts,
+conversations, messages, carried mesh packets, the directory cache and
+settings. Kotlin supplies the 32-byte database key from the Android Keystore;
+it never keeps its own database. WAL is enabled, one writer task owns all
+writes and a bounded pool of read-only connections serves queries. Migrations
+are versioned and tested from an empty file and from the previous schema.
+Android auto-backup is excluded. See [`docs/storage.md`](docs/storage.md).
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.

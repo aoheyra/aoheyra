@@ -13,6 +13,9 @@
 /// (APP-07).
 pub mod payload;
 
+/// Encrypted SQLite message store and schema migration support (APP-04).
+pub mod storage;
+
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
