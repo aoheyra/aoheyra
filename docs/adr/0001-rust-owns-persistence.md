@@ -36,3 +36,8 @@ migrations live in Rust. The planned modules are `storage`, `storage/contacts`,
 - Kotlin screens are projections of Rust state; they render what Rust reports.
 - SQLite additions belong to APP-04 and APP-05; this ADR does not choose a
   schema or claim those issues are implemented.
+
+APP-04 implements this decision with one SQLCipher database, a 32-byte key
+supplied by Kotlin from the Keystore, WAL, versioned migrations, one writer
+task and a bounded read-only connection pool. The file format and schema are
+documented in `docs/storage.md`.
