@@ -5,18 +5,15 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
-import android.os.Handler
 import android.os.ParcelUuid
 import com.aoheyra.ble.advertise.AndroidAdvertiser
 import com.aoheyra.ble.core.BleError
 import com.aoheyra.ble.core.BleResult
-import com.aoheyra.ble.core.BleThread
 import com.aoheyra.ble.core.PeerKey
 
 /** Android implementation of the service-UUID-filtered scanner. */
 class AndroidScanner(
     private val events: ScanEvents,
-    private val bleThread: BleThread,
 ) : ScanController {
     private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private var callback: ScanCallback? = null
@@ -24,8 +21,10 @@ class AndroidScanner(
     override fun start(mode: ScanPower): BleResult<Unit> {
         val scanner = adapter?.takeIf { it.isEnabled }?.bluetoothLeScanner
             ?: return Result.failure(BleError.RadioUnavailable)
-        val handler = bleThread.gattCallbackHandler() as? Handler
-            ?: return Result.failure(BleError.RadioUnavailable)
+        // The facade calls this controller on the serial BLE thread. The
+        // three-argument overload delivers callbacks on that caller thread,
+        // so no Handler is needed here; the four-argument overload is not
+        // available at this module's compile SDK.
         callback?.let(scanner::stopScan)
 
         val filter = ScanFilter.Builder()
@@ -52,7 +51,7 @@ class AndroidScanner(
                 results.forEach(::forward)
             }
         }
-        scanner.startScan(listOf(filter), settings, next, handler)
+        scanner.startScan(listOf(filter), settings, next)
         callback = next
         return Result.success(Unit)
     }
