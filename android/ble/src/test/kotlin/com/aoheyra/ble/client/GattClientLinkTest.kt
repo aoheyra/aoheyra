@@ -136,7 +136,16 @@ class GattClientLinkTest {
     @Test
     fun `failed mtu request still subscribes with the default`() {
         val handle = FakeHandle().apply { mtuAccepted = false }
-        val link = connectedLink(handle, FakeEvents())
+        val events = FakeEvents()
+        val link = GattClientLink(LinkId(1UL), peer(), handle, events)
+        link.start()
+        link.onConnected(0)
+        link.onServicesDiscovered(0, rxFound = true, txFound = true)
+
+        assertEquals(23, link.mtu())
+        assertEquals(listOf("notify:true", "cccd"), handle.calls.takeLast(2))
+        link.onDescriptorWrite(0)
+        assertEquals(listOf(LinkId(1UL) to 23), events.connected)
         assertEquals(23, link.mtu())
     }
 
