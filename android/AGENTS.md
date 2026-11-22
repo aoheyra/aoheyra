@@ -25,7 +25,7 @@ Issues: `AND-01..23`, label `area:android`. Titles carry the ID, e.g. `[AND-08] 
 | BLE core, advertiser, scanner, GATT server/client | `ble/` (AND-04..08) |
 | `NativeSink` implementation | `ble/` (AND-09) |
 | Foreground service | `app/service/` (AND-10) |
-| Permissions and onboarding | `app/onboarding/` (AND-03) |
+| Permissions and onboarding | `app/onboarding/` (AND-03) and [`docs/android-permissions.md`](../docs/android-permissions.md) |
 | Keystore `SecretVault`, app lock | `app/security/` (AND-13) |
 | Screens (chat, identity/contacts, settings, nearby, map, share-location) | `app/ui/` (AND-11, 12, 14, 15, 17, 18) |
 | Location provider | `app/location/` (AND-16) |
