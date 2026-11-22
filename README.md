@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M3 (Direct messaging over the mesh).** The Rust workspace contains the APP-08 runtime and APP-09 messaging service, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -34,7 +34,7 @@ aoNetwork and aoIdents never depend on each other.
 
 ## Weekly fuzzing
 
-[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. The APP-08 runtime adds no wire parser of its own; a future app parser must ship a matching fuzz target in the same change.
+[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. Neither the runtime nor the messaging service adds an app wire parser; they delegate packet and seal decoding to the sibling crates. A future app parser must ship a matching fuzz target in the same change.
 
 ## Ownership map (one owner per concept)
 
@@ -126,6 +126,16 @@ service. Time and RNG are inputs. The `runtime-tokio` feature is an optional
 current-thread executor for Android, not a core dependency. See
 [ADR 0006](docs/adr/0006-runtime-orchestration.md).
 
+APP-09 implements the messaging box as a sans-IO `MessagingService`: compose
+and seal an opaque body, hand a `Submission` to the host, then drive a bounded
+status machine with carried, receipt, failure, delivery, expiry, retry and
+cancel calls. The inbox uses bounded duplicate suppression and produces newest
+first conversation entries with unread counts until APP-05 persists them. See
+[ADR 0007](docs/adr/0007-messaging-service.md).
+
+The host drains `take_submissions` and submits each header and payload through
+the runtime. The payload remains opaque until APP-07 defines the app schema.
+
 Key decisions (APP-02), recorded as short ADRs:
 
 1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
@@ -134,6 +144,7 @@ Key decisions (APP-02), recorded as short ADRs:
 4. [Time and RNG are injected](docs/adr/0004-injected-time-and-rng.md); no shared utility crate unless a real duplication appears.
 5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
 6. [The sans-IO runtime owns lifecycle, store and event fan-out](docs/adr/0006-runtime-orchestration.md) (APP-08).
+7. [The messaging service prepares opaque submissions and owns status state](docs/adr/0007-messaging-service.md) (APP-09).
 
 The bridge maps every failure to a sealed `FfiException` case rather than a
 string: `InvalidDataDirectory` for a bad data directory, `InvalidArgument` for
