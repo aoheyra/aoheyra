@@ -6,7 +6,13 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-ignore = []
+ignore = [
+    # APP-03: `basic-toml` is pulled in only by `askama_derive` through
+    # `uniffi-bindgen`, which runs at build time to generate Kotlin bindings.
+    # It is not linked into the shipped Android cdylib. Remove this ignore
+    # when UniFFI's bindgen no longer depends on `askama_derive`.
+    { id = "RUSTSEC-2026-0374", reason = "build-time-only uniffi-bindgen dependency; not shipped" },
+]
 
 [licenses]
 version = 2
@@ -24,6 +30,8 @@ allow = [
     # sqlcipher-src 420.0.0 declares "MIT AND BSD-3-Clause AND blessing AND WTFPL".
     "blessing",
     "WTFPL",
+    # APP-03: UniFFI 0.29.4 and its generator crates are MPL-2.0.
+    "MPL-2.0",
 ]
 
 [bans]

@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded and consumes tagged sibling crates. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M0 (Foundations).** The Rust workspace is scaffolded, consumes tagged sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -126,6 +126,12 @@ Key decisions (APP-02), recorded as short ADRs:
 4. [Time and RNG are injected](docs/adr/0004-injected-time-and-rng.md); no shared utility crate unless a real duplication appears.
 5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
 
+The bridge maps every failure to a sealed `FfiException` case rather than a
+string: `InvalidDataDirectory` for a bad data directory, `InvalidArgument` for
+a native-contract violation, `EventQueueFull` when the bounded listener queue
+rejects an event, `CallbackFailed` for a failed callback, and `Closed` after
+shutdown.
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
@@ -143,6 +149,13 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
 cargo deny check
 ```
+
+`:app:generateUniFFIBindings` builds a host cdylib from the pinned UniFFI 0.29.4
+crate and writes Kotlin bindings to
+`android/app/build/generated/source/uniffi/kotlin`. The task runs automatically
+before `preBuild`; bindings are build output and are never committed. JNA and
+kotlinx-coroutines are declared explicitly because the generated code imports
+them.
 
 `x86_64` is for emulator UI work only; the radio needs **physical phones**.
 

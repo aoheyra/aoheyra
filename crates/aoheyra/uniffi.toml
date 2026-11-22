@@ -1,0 +1,4 @@
+[bindings.kotlin]
+package_name = "com.aoheyra.core"
+cdylib_name = "aoheyra"
+android = true

@@ -1,7 +1,63 @@
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
+// UniFFI reads proc-macro metadata from a host cdylib, so the Gradle task
+// builds that library first and generates Kotlin from it. Both outputs stay
+// under build/ (or the caller's CARGO_TARGET_DIR) and are never committed.
+val rustRoot: File = rootProject.projectDir.parentFile
+val cargoTargetDir: File = providers.environmentVariable("CARGO_TARGET_DIR")
+    .orNull
+    ?.let(::File)
+    ?: layout.buildDirectory.dir("cargo-target").get().asFile
+val hostLibraryName = when {
+    System.getProperty("os.name").contains("Windows", ignoreCase = true) -> "aoheyra.dll"
+    System.getProperty("os.name").contains("Mac", ignoreCase = true) -> "libaoheyra.dylib"
+    else -> "libaoheyra.so"
+}
+val hostLibrary = File(cargoTargetDir, "debug/$hostLibraryName")
+val uniffiConfig = File(rustRoot, "crates/aoheyra/uniffi.toml")
+val generatedBindingsDir: File = layout.buildDirectory.dir("generated/source/uniffi/kotlin").get().asFile
+
+val buildUniFFILibrary by tasks.registering(Exec::class) {
+    group = "uniffi"
+    description = "Builds the host cdylib that UniFFI reads metadata from."
+    workingDir(rustRoot)
+    environment("CARGO_TARGET_DIR", cargoTargetDir.absolutePath)
+    inputs.files(
+        File(rustRoot, "Cargo.toml"),
+        File(rustRoot, "Cargo.lock"),
+        File(rustRoot, "crates/aoheyra/Cargo.toml"),
+    )
+    inputs.dir(File(rustRoot, "crates/aoheyra/src"))
+    outputs.file(hostLibrary)
+    commandLine("cargo", "build", "--locked", "--lib")
+}
+
+val generateUniFFIBindings by tasks.registering(Exec::class) {
+    group = "uniffi"
+    description = "Generates Kotlin bindings for the aoheyra Rust bridge."
+    dependsOn(buildUniFFILibrary)
+    workingDir(rustRoot)
+    environment("CARGO_TARGET_DIR", cargoTargetDir.absolutePath)
+    inputs.file(hostLibrary)
+    inputs.file(uniffiConfig)
+    outputs.dir(generatedBindingsDir)
+    commandLine(
+        "cargo", "run", "--locked", "--features", "bindgen", "--bin", "uniffi-bindgen", "--",
+        "generate",
+        "--library", hostLibrary.absolutePath,
+        "--language", "kotlin",
+        "--config", uniffiConfig.absolutePath,
+        "--out-dir", generatedBindingsDir.absolutePath,
+        "--no-format",
+    )
+}
+
+tasks.named("preBuild") { dependsOn(generateUniFFIBindings) }
 
 android {
     namespace = "com.aoheyra.app"
@@ -62,10 +118,17 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    sourceSets["main"].kotlin.srcDir(generatedBindingsDir)
 }
 
 dependencies {
     implementation(project(":ble"))
+
+    // Required by the generated UniFFI Kotlin bindings (see the 0.29 docs).
+    implementation("net.java.dev.jna:jna:5.13.0@aar")
+    implementation("androidx.annotation:annotation:1.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     val composeBom = platform("androidx.compose:compose-bom:2024.04.00")
     implementation(composeBom)
