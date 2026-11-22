@@ -227,6 +227,15 @@ codec. `topology` gives the debug overlay neighbour counters and directory
 counts only. The decision is recorded in
 [`docs/adr/0012-map-data-service.md`](docs/adr/0012-map-data-service.md).
 
+### Channels service (APP-14)
+
+`aoheyra::channels::ChannelService` adds local state on top of aoMesh's signed
+public-channel envelopes (MSH-23): bounded join/leave state, arrival-ordered
+history with duplicate removal, per-origin mutes and a bounded rate limiter.
+Origins are shared aoIdents `NodeId` values from verified packet headers. The
+mesh still owns the envelope format, channel-id derivation and relay budgets.
+[ADR 0013](docs/adr/0013-channels-service.md) records the design.
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
