@@ -374,11 +374,13 @@ impl AoHeyra {
         guard_callback(|| self.inner.sink.disconnect(link))
     }
 
-    /// Closes the bridge and discards undelivered events.
+    /// Shuts down the bridge and discards undelivered events.
     ///
-    /// Idempotent. Calls and callbacks after close are ignored with
+    /// Idempotent. Calls and callbacks after shutdown are ignored with
     /// [`FfiError::Closed`]; this is the late-callback rule from ADR 0002.
-    pub fn close(&self) {
+    /// This is not named `close` because UniFFI generates a Kotlin `close`
+    /// for the object's resource cleanup, which would collide.
+    pub fn shutdown(&self) {
         self.inner.events.close();
     }
 }

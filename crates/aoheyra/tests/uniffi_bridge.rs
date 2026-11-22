@@ -193,11 +193,11 @@ fn listener_failure_is_a_typed_error_not_a_panic() {
 }
 
 #[test]
-fn late_calls_after_close_are_rejected() {
+fn late_calls_after_shutdown_are_rejected() {
     let listener = Arc::new(RecordingListener::default());
     let app = new_app(listener.clone());
 
-    app.close();
+    app.shutdown();
     assert_eq!(block_on(app.ping()), Err(FfiError::Closed));
     assert!(lock(&listener.events).is_empty());
 }
