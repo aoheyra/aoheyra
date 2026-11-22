@@ -2,7 +2,7 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
-> **Status: pre-alpha, M3 (Direct messaging over the mesh).** The Rust workspace contains the APP-08 runtime, APP-09 messaging service and APP-10 contacts service, APP-11 settings validation and untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
+> **Status: pre-alpha, M5 (Location sharing).** The Rust workspace contains the APP-08 runtime, APP-09 messaging service, APP-10 contacts service, APP-11 settings validation and APP-12 location service, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
 
@@ -34,7 +34,7 @@ aoNetwork and aoIdents never depend on each other.
 
 ## Weekly fuzzing
 
-[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. The runtime, messaging, contacts and settings services add no app wire parser; they delegate packet, seal, card and QR decoding to the sibling crates. A future app parser must ship a matching fuzz target in the same change.
+[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. The runtime, messaging, contacts, settings and location services delegate packet, seal, card and QR decoding to the sibling crates. No fuzz target for the APP-07 payload codec or the APP-12 sealed share framing ships here yet; this branch does not claim fuzz coverage for those parsers.
 
 ## Ownership map (one owner per concept)
 
@@ -63,6 +63,20 @@ The versioned binary `AppPayload` codec lives in
 `crates/aoheyra/src/payload.rs`; its exact layout and mapping onto aoMesh
 packet classes are recorded in
 [ADR 0003](docs/adr/0003-app-payload-schema.md).
+
+APP-12 implements the location box as a sans-IO `LocationService`: bounded
+share sessions, sealed updates to chosen contacts, receive-side replay control
+and position aggregation, immediate stop notices and self-expiry. The privacy
+test opens every sealed recipient update and decodes every local publish for
+`Off`, `Approx100m` and `Precise`, then inspects the exact outgoing payload
+bytes. It proves that the precise coordinate pattern is absent unless the
+session is precise. See
+[ADR 0010](docs/adr/0010-location-service-sessions-and-privacy.md).
+
+Because APP-08 is still a draft, the location service does not call a runtime.
+It returns an `OutgoingLocation` with the aoMesh `Header` and sealed payload;
+the host submits that plan and calls `mark_published` after submission. No
+runtime integration is claimed.
 
 ## What the app will do (MVP)
 
@@ -159,6 +173,18 @@ The runtime config seam maps onto APP-08's `RuntimeConfig`. Relay on/off
 changes the advertised beacon flag and the relay-willingness hint passed to
 the runtime; aoMesh's own relay policy remains the routing owner.
 
+APP-12 implements the location box as a sans-IO `LocationService<R>`: bounded
+share sessions, recipient-bound sealed updates, a single due publish plan per
+tick, stop and expiry notices, and a bounded latest-position map keyed by
+session and sender. Precision is applied in `LocationUpdate::new` at the
+outgoing boundary, so `Off` never serialises coordinates and `Approx100m`
+only serialises rounded ones. See
+[ADR 0010](docs/adr/0010-location-service-sessions-and-privacy.md).
+
+The host submits the prepared packets through the merged runtime. Receiving
+authenticates seals, checks header ids, sender, session and sequence, then
+stores one latest position per peer; it never reads a clock or opens a radio.
+
 Key decisions (APP-02), recorded as short ADRs:
 
 1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
@@ -170,6 +196,7 @@ Key decisions (APP-02), recorded as short ADRs:
 7. [The messaging service prepares opaque submissions and owns status state](docs/adr/0007-messaging-service.md) (APP-09).
 8. [The contacts service wraps aoIdents and gates sending on key decisions](docs/adr/0008-contacts-service-and-send-gate.md) (APP-10).
 9. [Settings are validated at the app boundary and mapped to sibling configs](docs/adr/0009-settings-validation-and-config-mapping.md) (APP-11).
+10. [Location share sessions apply precision at the outgoing boundary](docs/adr/0010-location-service-sessions-and-privacy.md) (APP-12).
 
 The bridge maps every failure to a sealed `FfiException` case rather than a
 string: `InvalidDataDirectory` for a bad data directory, `InvalidArgument` for

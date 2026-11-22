@@ -22,6 +22,10 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+/// Bounded share sessions, recipient sealing and position aggregation
+/// (APP-12).
+pub mod location;
+
 /// Validated app settings and their mapping onto sibling configs (APP-11).
 pub mod settings;
 
