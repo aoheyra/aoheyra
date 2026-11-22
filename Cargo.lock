@@ -50,6 +50,8 @@ dependencies = [
  "ao_idents",
  "ao_network",
  "blake3",
+ "rand 0.8.8",
+ "rand 0.9.5",
  "rand_core 0.9.5",
 ]
 

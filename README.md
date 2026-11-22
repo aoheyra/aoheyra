@@ -318,7 +318,9 @@ Issue conventions: put the ID in the title (`[APP-09] Messaging service`). Label
 
 ## MVP acceptance scenarios
 
-These become the integration suite (APP-17) and the field-test script (AND-23).
+Scenarios 1-6 run automatically on every pull request as the APP-17 suite on
+aoNetwork's SimWorld; see [the integration suite](docs/integration-suite.md).
+They are also the first part of the field-test script (AND-23).
 
 1. **Direct chat:** two phones, message delivered, receipt shown.
 2. **Relay:** A, B, C in a line, A and C out of range; A's message reaches C through B.
