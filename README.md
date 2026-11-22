@@ -128,7 +128,7 @@ Key decisions (APP-02), recorded as short ADRs:
 
 ## Build
 
-> Requirements: Rust 1.85 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
+> Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.
 
 ```bash
 # Native libraries (one documented command, APP-01)
