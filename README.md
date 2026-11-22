@@ -206,6 +206,18 @@ These become the integration suite (APP-17) and the field-test script (AND-23).
 
 Report vulnerabilities privately to the maintainers (contact in `SECURITY.md`), not in a public issue.
 
+## Release and legal
+
+The release set is four git tags, all `v0.1.0` for the first release; the tag
+matrix is verified during `cargo test` and documented in
+[`docs/release.md`](docs/release.md). The dependency licence report is
+[`docs/legal/third-party-licenses.md`](docs/legal/third-party-licenses.md),
+generated from `cargo metadata` and enforced by `cargo deny check`. The
+privacy draft is [`docs/legal/privacy-policy.md`](docs/legal/privacy-policy.md)
+and the threat-model-derived review checklist is
+[`docs/legal/security-review.md`](docs/legal/security-review.md); the checklist
+is not signed off until named reviewers record evidence.
+
 ## License
 
-Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option, matching aoMesh, aoNetwork and aoIdents.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option, matching aoMesh, aoNetwork and aoIdents at the pinned `v0.1.0` tags.

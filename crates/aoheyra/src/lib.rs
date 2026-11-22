@@ -9,6 +9,9 @@
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Release-tag matrix and its manifest check (APP-18).
+pub mod release;
+
 #[cfg(test)]
 mod tests {
     use super::VERSION;
