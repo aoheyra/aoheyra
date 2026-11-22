@@ -73,7 +73,7 @@ class LinkRegistryTest {
         val input = ByteArray(PeerKey.LENGTH)
         input[0] = 0x0A
         val key = PeerKey.from(input).getOrThrow()
-        input[0] = 0xFF
+        input[0] = 0xFF.toByte()
         assertEquals(0x0A.toByte(), key.bytes[0])
         assertEquals(BleError.InvalidPeer, PeerKey.fromAddress(ByteArray(5)).exceptionOrNull())
     }
