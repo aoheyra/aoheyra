@@ -248,28 +248,23 @@ class BleNativeSinkTest {
     fun `sink methods post work and never call Rust from the caller thread`() {
         val fixture = Fixture()
         fixture.started()
+        val link = fixture.connectedLink()
+        val baseline = fixture.events.calls.toList()
 
         assertTrue(fixture.sink.setAdvertising(beacon(), AdvertisePower.LOW_POWER).isSuccess)
-        assertTrue(fixture.sink.connect(1UL, peer()).isSuccess)
+        assertTrue(fixture.sink.write(link.value, byteArrayOf(0x01, 0x02)).isSuccess)
+        assertTrue(fixture.sink.disconnect(link.value).isSuccess)
 
+        assertEquals(baseline, fixture.events.calls)
         assertEquals(0, fixture.advertise.starts.size)
-        assertEquals(0, fixture.handle.writes.size)
-        assertEquals(emptyList<String>(), fixture.events.calls)
-
-        fixture.thread.drain()
-        assertEquals(1, fixture.advertise.starts.size)
-        assertEquals(0, fixture.handle.writes.size)
-        assertEquals(emptyList<String>(), fixture.events.calls)
-
-        assertTrue(fixture.sink.write(1UL, byteArrayOf(0x01, 0x02)).isSuccess)
-        assertTrue(fixture.sink.disconnect(1UL).isSuccess)
         assertEquals(0, fixture.handle.writes.size)
         assertEquals(0, fixture.handle.disconnects)
 
         fixture.thread.drain()
+        assertEquals(baseline, fixture.events.calls)
+        assertEquals(1, fixture.advertise.starts.size)
         assertEquals(1, fixture.handle.writes.size)
         assertEquals(1, fixture.handle.disconnects)
-        assertEquals(emptyList<String>(), fixture.events.calls)
     }
 
     @Test
@@ -317,6 +312,7 @@ class BleNativeSinkTest {
     @Test
     fun `radio off closes every link before forwarding the state`() {
         val fixture = Fixture()
+        fixture.started()
         val link = fixture.connectedLink()
 
         fixture.sink.onRadioState(RadioState.OFF)
