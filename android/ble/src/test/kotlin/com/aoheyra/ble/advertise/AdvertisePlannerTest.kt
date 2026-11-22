@@ -77,7 +77,17 @@ class AdvertisePlannerTest {
     }
 
     @Test
-    fun `stop and bluetooth toggle restart advertising`() {
+    fun `bluetooth toggle restarts the last desired advertisement`() {
+        val planner = AdvertisePlanner(TestEvents(), TestClock())
+        val beacon = ByteArray(AdvertisePlanner.BEACON_LENGTH)
+
+        planner.setAdvertising(beacon, AdvertisePower.BALANCED)
+        assertEquals(AdvertiseCommand.Hold, planner.setRadioReady(false))
+        assertStart(planner.setRadioReady(true), beacon, AdvertisePower.BALANCED, true)
+    }
+
+    @Test
+    fun `an explicit stop is not undone by a bluetooth toggle`() {
         val planner = AdvertisePlanner(TestEvents(), TestClock())
         val beacon = ByteArray(AdvertisePlanner.BEACON_LENGTH)
 
@@ -87,7 +97,7 @@ class AdvertisePlannerTest {
             planner.setAdvertising(null, AdvertisePower.BALANCED).getOrThrow(),
         )
         assertEquals(AdvertiseCommand.Hold, planner.setRadioReady(false))
-        assertStart(planner.setRadioReady(true), beacon, AdvertisePower.BALANCED, true)
+        assertEquals(AdvertiseCommand.Hold, planner.setRadioReady(true))
     }
 
     @Test
