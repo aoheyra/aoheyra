@@ -2,11 +2,12 @@
 //! and the local identity.
 //!
 //! The runtime is sans-IO. [`Runtime::step`] takes an injected time and a
-//! caller-owned [`Context`], polls one transport event and returns typed events
-//! for the host. Nothing here reads a clock, draws randomness, spawns a task
-//! or interprets an application payload: aoMesh sees opaque bytes and a
-//! [`PacketClass`], and aoIdents owns the keys and the seal. The wired
-//! [`MessageStore`] absorbs sync items, answers sync requests and applies
+//! caller-owned [`std::task::Context`], polls one transport event and returns
+//! typed events for the host. Nothing here reads a clock, draws randomness,
+//! spawns a task or interprets an application payload: aoMesh sees opaque
+//! bytes and an [`ao_mesh::packet::PacketClass`], and aoIdents owns the keys
+//! and the seal. The wired [`ao_mesh::store::MessageStore`] absorbs sync
+//! items, answers sync requests and applies
 //! receipt purges before the host sees the remaining events.
 //!
 //! Event fan-out is a separate bounded [`EventQueue`]. A full queue returns
