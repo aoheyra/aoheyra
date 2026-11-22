@@ -18,6 +18,10 @@
 //! The settings module validates user-facing values and maps them onto
 //! aoNetwork, aoMesh, store limits and the runtime config. It never reads a
 //! clock or radio state.
+//!
+//! Jan is the name of the networking engine built from aoMesh, aoNetwork and
+//! this runtime. The jan module handles its opt-in signed discovery records;
+//! the key-derived node id remains the authoritative identity.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -87,6 +91,14 @@ pub mod storage;
 
 /// Bounded local public-channel history and spam controls (APP-14).
 pub mod channels;
+
+/// Jan signed discovery records and the bounded local directory (JAN-01).
+pub mod jan;
+
+pub use jan::{
+    DEFAULT_DIRECTORY_CAPACITY, DirectoryEntry, DiscoveryError, DiscoveryRecord, JAN_BIO_PREFIX,
+    MAX_DIRECTORY_CAPACITY, NodeDirectory, PHONE_DIGITS,
+};
 
 /// Privacy-preserving, deterministic diagnostics archive (APP-15).
 pub mod diagnostics;

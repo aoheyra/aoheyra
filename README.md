@@ -2,6 +2,8 @@
 
 **Mesh network messaging for Android.** Chat, share your location and see your contacts on an offline map with no internet and no servers, over a Bluetooth LE mesh of nearby phones. Messages hop phone to phone, and are carried and delivered later if the recipient is out of range.
 
+**Jan** is the name of our networking engine: the aoMesh, aoNetwork and runtime stack that forms and maintains the mesh. A Jan discovery record carries the user-chosen username and a random ten-digit number in a signed presence profile; it is broadcast only while the user opts in. The key-derived node id remains the authoritative identity.
+
 > **Status: pre-alpha, M5 (Location sharing).** The Rust workspace contains the APP-08 runtime, APP-09 messaging service, APP-10 contacts service, APP-11 settings validation and APP-12 location service, consumes untagged pre-release sibling crates and has the APP-03 UniFFI bridge skeleton. This README records the planned design from the project backlog (`APP-xx`, `AND-xx`); each issue is implemented in its own PR. Fuzzing is centralised in [aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz).
 
 Platform: **Android only** (minSdk proposed 26, to be confirmed by the BLE spike AND-02).
