@@ -236,6 +236,15 @@ Origins are shared aoIdents `NodeId` values from verified packet headers. The
 mesh still owns the envelope format, channel-id derivation and relay budgets.
 [ADR 0013](docs/adr/0013-channels-service.md) records the design.
 
+### Diagnostics bundle (APP-15)
+
+`aoheyra::diagnostics` builds a deterministic archive of allowlisted link,
+mesh, device and structured-log state from the real aoNetwork and aoMesh
+snapshots. It deliberately omits peer keys, raw link ids, application hellos,
+message text and coordinates. [ADR 0014](docs/adr/0014-diagnostics-bundle.md)
+records the format and the privacy argument; the caller, not the Rust core,
+writes the returned bytes and asks the user before sharing them.
+
 ## Build
 
 > Requirements: Rust 1.89 or newer, Android SDK/NDK, `cargo-ndk`, JDK 17+. The Android Gradle scaffold is present; the native build command is documented below. Android SDK/NDK and `cargo-ndk` were unavailable locally, so device installation and native builds are verified in CI rather than claimed here.

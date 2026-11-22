@@ -88,6 +88,9 @@ pub mod storage;
 /// Bounded local public-channel history and spam controls (APP-14).
 pub mod channels;
 
+/// Privacy-preserving, deterministic diagnostics archive (APP-15).
+pub mod diagnostics;
+
 /// Crate version from `Cargo.toml`, used by diagnostics and release checks.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

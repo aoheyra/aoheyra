@@ -53,6 +53,11 @@ rand_core06 = { package = "rand_core", version = "0.6" }
 # MIT licence, MSRV below 1.85; feature set limited to a current-thread
 # executor with timers, as required by the Android foreground service.
 tokio = { version = "1", features = ["rt", "time"], optional = true }
+# Deterministic, versioned JSON for the diagnostics archive. Both crates are
+# permissively licensed, already present in the pinned graph and limited to
+# the std feature set; they replace hand-written JSON escaping.
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 rand = "0.9"
