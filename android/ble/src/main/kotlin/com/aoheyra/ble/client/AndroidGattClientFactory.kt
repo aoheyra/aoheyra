@@ -17,9 +17,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 /** Android `BluetoothGatt` implementation; all operations stay serial. */
 class AndroidGattClientFactory(
-    private val context: Context,
+    context: Context,
     private val bleThread: BleThread,
 ) : GattHandleFactory {
+    private val appContext: Context = context.applicationContext
     private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val gattLinks = mutableMapOf<BluetoothGatt, LinkId>()
     private val peerByLink = ConcurrentHashMap<LinkId, PeerKey>()
@@ -41,13 +42,18 @@ class AndroidGattClientFactory(
         val peer = peerByLink[linkId] ?: return null
         val handler = bleThread.gattCallbackHandler() as? Handler ?: return null
         val device = adapter?.getRemoteDevice(peer.addressBytes()) ?: return null
-        val gatt = device.connectGatt(
-            context,
-            false,
-            gattCallback,
-            BluetoothDevice.TRANSPORT_LE,
-            handler,
-        ) ?: return null
+        val gatt = try {
+            device.connectGatt(
+                appContext,
+                false,
+                gattCallback,
+                BluetoothDevice.TRANSPORT_LE,
+                BluetoothDevice.PHY_LE_1M,
+                handler,
+            )
+        } catch (security: SecurityException) {
+            return null
+        } ?: return null
         gattLinks[gatt] = linkId
         return AndroidGattHandle(gatt) { gattLinks.remove(it) }
     }
