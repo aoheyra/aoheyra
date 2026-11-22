@@ -21,6 +21,9 @@ allow = [
     "Zlib",
     "Unicode-3.0",
     "Unicode-DFS-2016",
+    # sqlcipher-src 420.0.0 declares "MIT AND BSD-3-Clause AND blessing AND WTFPL".
+    "blessing",
+    "WTFPL",
 ]
 
 [bans]
