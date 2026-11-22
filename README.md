@@ -34,7 +34,7 @@ aoNetwork and aoIdents never depend on each other.
 
 ## Weekly fuzzing
 
-[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this docs-only repository. `aoheyra` has no fuzz targets while it has no Rust code; adding code here requires a matching fuzz target in the same change that introduces the parser.
+[aoheyra-fuzz](https://github.com/aoheyra/aoheyra-fuzz) starts a 90-minute fuzz run every Sunday at 00:00 IST (Saturday 18:30 UTC, GitHub cron `30 18 * * 6`). It dispatches 5,400 libFuzzer seconds to each of `aoMesh`, `aoNetwork` and `aoIdents`, split across every target in the repository, and validates this repository's docs. The APP-08 runtime adds no wire parser of its own; a future app parser must ship a matching fuzz target in the same change.
 
 ## Ownership map (one owner per concept)
 
@@ -118,6 +118,14 @@ placeholder until AND-04..09.
                                  └─ Storage: rusqlite + SQLCipher (WAL, migrations)
 ```
 
+APP-08 implements this as a sans-IO `Runtime<R, T, S>`: one owner for the
+adapter, identity, validated settings and an injected `MessageStore`. `step`
+polls one radio event, applies store feedback and returns typed host events;
+`start`, `pause`, `resume` and `stop` are idempotent for the foreground
+service. Time and RNG are inputs. The `runtime-tokio` feature is an optional
+current-thread executor for Android, not a core dependency. See
+[ADR 0006](docs/adr/0006-runtime-orchestration.md).
+
 Key decisions (APP-02), recorded as short ADRs:
 
 1. [Rust owns all persistence](docs/adr/0001-rust-owns-persistence.md); Kotlin never writes its own database.
@@ -125,6 +133,7 @@ Key decisions (APP-02), recorded as short ADRs:
 3. [The app payload schema lives here and is versioned](docs/adr/0003-app-payload-schema.md).
 4. [Time and RNG are injected](docs/adr/0004-injected-time-and-rng.md); no shared utility crate unless a real duplication appears.
 5. [One runtime-owned object reaches aoNetwork](docs/adr/0005-kotlin-ble-reaches-ao-network.md) on behalf of the Kotlin `:ble` module.
+6. [The sans-IO runtime owns lifecycle, store and event fan-out](docs/adr/0006-runtime-orchestration.md) (APP-08).
 
 The bridge maps every failure to a sealed `FfiException` case rather than a
 string: `InvalidDataDirectory` for a bad data directory, `InvalidArgument` for

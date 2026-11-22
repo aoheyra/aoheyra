@@ -16,6 +16,18 @@
 /// (APP-07).
 pub mod payload;
 
+/// Sans-IO runtime that owns the mesh engine, network facade, identity and
+/// injected message store (APP-08).
+pub mod runtime;
+
+#[cfg(feature = "runtime-tokio")]
+pub use runtime::block_on_current_thread;
+pub use runtime::{
+    ConfigError, DEFAULT_EVENT_CAPACITY, DEFAULT_LIFETIME_S, DEFAULT_TTL, EventQueue,
+    EventQueueError, LifecycleState, Runtime, RuntimeConfig, RuntimeError, RuntimeEvent,
+    SendFailure,
+};
+
 mod ffi;
 
 pub use ffi::{

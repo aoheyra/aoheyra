@@ -22,6 +22,9 @@ required-features = ["bindgen"]
 default = []
 # Builds the pinned UniFFI CLI wrapper used by the Gradle binding task only.
 bindgen = ["uniffi/cli"]
+# Dedicated current-thread executor for the Android service thread. The
+# sans-IO orchestrator stays independent of any async runtime.
+runtime-tokio = ["dep:tokio"]
 
 [dependencies]
 # Pre-release siblings are untagged git sources on their default branches,
@@ -30,8 +33,11 @@ bindgen = ["uniffi/cli"]
 # types across the seam. Release tags start at v0.1.0 and will be adopted by
 # every crate together when they are cut.
 ao_idents = { git = "https://github.com/aoheyra/aoIdents" }
-ao_mesh = { git = "https://github.com/aoheyra/aoMesh" }
+ao_mesh = { git = "https://github.com/aoheyra/aoMesh", features = ["adapter"] }
 ao_network = { git = "https://github.com/aoheyra/aoNetwork" }
+# Engine randomness is injected (ADR 0004). The seeded implementation is used
+# only by the runtime tests; production supplies its own CSPRNG.
+rand_core = "0.9"
 # Pinned so the library scaffolding, CLI wrapper and Gradle-generated bindings
 # all use exactly the same UniFFI release. Newer releases require a higher MSRV
 # than this workspace's Rust 1.85.
@@ -41,3 +47,12 @@ uniffi = "=0.29.4"
 # a system libcrypto. Version 0.42 bundles sqlcipher-src 420.x, which carries
 # the patched SQLite for RUSTSEC-2026-0459. See the PR for the options compared.
 rusqlite = { version = "0.42", features = ["bundled-sqlcipher-vendored-openssl"] }
+# MIT licence, MSRV below 1.85; feature set limited to a current-thread
+# executor with timers, as required by the Android foreground service.
+tokio = { version = "1", features = ["rt", "time"], optional = true }
+
+[dev-dependencies]
+rand = "0.9"
+# aoIdents seals on the rand_core 0.6 trait line; rand 0.8 supplies a seeded
+# CSPRNG for deterministic two-instance tests.
+rand08 = { package = "rand", version = "0.8" }
