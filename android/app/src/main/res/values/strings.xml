@@ -32,9 +32,9 @@
     <string name="oem_samsung_title">Samsung: check Sleeping apps</string>
     <string name="oem_samsung_detail">If relaying stops with the screen off, check Settings, Device care, Battery, Sleeping apps, and keep aoheyra out of the sleeping list if you want it to relay in the background.</string>
     <string name="oem_xiaomi_title">Xiaomi: check Autostart</string>
-    <string name="oem_xiaomi_detail">If relaying stops with the screen off, check the app's Autostart and background-activity settings in the vendor's Security app, then reopen aoheyra.</string>
+    <string name="oem_xiaomi_detail">If relaying stops with the screen off, check the app\'s Autostart and background-activity settings in the vendor\'s Security app, then reopen aoheyra.</string>
     <string name="oem_oneplus_title">Oppo and OnePlus: check background activity</string>
-    <string name="oem_oneplus_detail">If relaying stops with the screen off, check the app's background-activity and aggressive-battery settings in Settings, then reopen aoheyra.</string>
+    <string name="oem_oneplus_detail">If relaying stops with the screen off, check the app\'s background-activity and aggressive-battery settings in Settings, then reopen aoheyra.</string>
     <string name="oem_other_title">Older or unknown devices</string>
     <string name="oem_other_detail">If relaying stops with the screen off, look in Android Settings for background-data and battery restrictions for aoheyra. The exact menu depends on the device and Android version.</string>
     <string name="cd_oem_help_list">Vendor-specific steps for keeping the mesh running</string>
