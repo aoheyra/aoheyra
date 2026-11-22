@@ -247,9 +247,10 @@ Report vulnerabilities privately to the maintainers (contact in `SECURITY.md`), 
 
 ## Release and legal
 
-The release set is four git tags, all `v0.1.0` for the first release; the tag
-matrix is verified during `cargo test` and documented in
-[`docs/release.md`](docs/release.md). The dependency licence report is
+The release set will be four coordinated `v0.1.0` git tags, but no tags exist
+yet; the pre-release untagged sources and planned tag matrix are verified during
+`cargo test` and documented in [`docs/release.md`](docs/release.md). The
+dependency licence report is
 [`docs/legal/third-party-licenses.md`](docs/legal/third-party-licenses.md),
 generated from `cargo metadata` and enforced by `cargo deny check`. The
 privacy draft is [`docs/legal/privacy-policy.md`](docs/legal/privacy-policy.md)
@@ -259,4 +260,4 @@ is not signed off until named reviewers record evidence.
 
 ## License
 
-Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option, matching aoMesh, aoNetwork and aoIdents at the pinned `v0.1.0` tags.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option, matching aoMesh, aoNetwork and aoIdents on their untagged pre-release sources; the first `v0.1.0` tags will be cut together.

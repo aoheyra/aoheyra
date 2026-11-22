@@ -1,10 +1,13 @@
 //! Release-tag verification for the four-repository release process (APP-18).
 //!
-//! Siblings are consumed by git tag, never by branch or local `[patch]`. The
-//! test below reads the checked-in manifest so a drift in any tag is caught
-//! by the normal `cargo test` run, before a tag is cut.
+//! Until the first coordinated release, siblings are consumed as untagged git
+//! sources on their default branches. Cargo treats a tagged source as a
+//! different identity, so pinning one sibling early would duplicate `Identity`,
+//! `LinkId` and `NodeId` types across the seam. The tag matrix below records
+//! the tags that will be cut together; the tests read the checked-in manifest
+//! so manifest drift is caught by the normal `cargo test` run.
 
-/// Workspace version that must match the `v0.1.0` sibling tags.
+/// Workspace version that will be matched by the first `v0.1.0` sibling tags.
 pub const RELEASE_VERSION: &str = "0.1.0";
 
 /// The git tags every repository in the release set must resolve together.
@@ -30,12 +33,24 @@ mod tests {
     }
 
     #[test]
-    fn every_sibling_is_pinned_to_the_release_tag() {
-        for (repo, tag) in TAG_MATRIX.iter().take(3) {
-            let needle = format!("{repo}\", tag = \"{tag}\"");
+    fn release_matrix_covers_all_four_repositories() {
+        assert_eq!(TAG_MATRIX.len(), 4);
+        for (repo, tag) in TAG_MATRIX {
+            assert_eq!(tag, "v0.1.0", "{repo} has an unexpected release tag");
+        }
+    }
+
+    #[test]
+    fn siblings_are_untagged_until_the_first_release() {
+        for (repo, _) in TAG_MATRIX.iter().take(3) {
+            let source = format!("git = \"https://github.com/aoheyra/{repo}\"");
             assert!(
-                MANIFEST.contains(&needle),
-                "{repo} must be pinned to {tag}, found in manifest:\n{MANIFEST}"
+                MANIFEST.contains(&source),
+                "{repo} must be an untagged git source, found in manifest:\n{MANIFEST}"
+            );
+            assert!(
+                !MANIFEST.contains(&format!("{repo}\", tag =")),
+                "{repo} must not be pinned to a release tag yet"
             );
         }
     }
