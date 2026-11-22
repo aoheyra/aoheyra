@@ -89,10 +89,10 @@ impl Drop for WriterTask {
         // Closing the last sender lets the worker drain accepted jobs and exit.
         drop(self.sender.take());
         // Never try to join the writer from itself.
-        if let Some(worker) = self.worker.take() {
-            if thread::current().id() != worker.thread().id() {
-                let _ = worker.join();
-            }
+        if let Some(worker) = self.worker.take()
+            && thread::current().id() != worker.thread().id()
+        {
+            let _ = worker.join();
         }
     }
 }
