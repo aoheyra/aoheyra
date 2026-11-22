@@ -83,15 +83,15 @@ class GattServerHostTest {
         host.onCentralConnected(peer)
         host.onCccdWritten(peer, 1)
 
-        val first = host.enqueueNotification(LinkId(1UL), byteArrayOf(1))
+        val first = host.enqueueNotification(LinkId(1UL), byteArrayOf(1)).getOrThrow()
         assertTrue(first is NotificationSend.Send)
-        assertTrue(first.bytes.contentEquals(byteArrayOf(1)))
+        assertTrue((first as NotificationSend.Send).bytes.contentEquals(byteArrayOf(1)))
         assertTrue(host.enqueueNotification(LinkId(1UL), byteArrayOf(2)).isSuccess)
         assertTrue(events.ready.isEmpty())
 
         val next = host.onNotificationSent(peer, true, 0)
         assertTrue(next is NotificationSend.Send)
-        assertTrue(next.bytes.contentEquals(byteArrayOf(2)))
+        assertTrue((next as NotificationSend.Send).bytes.contentEquals(byteArrayOf(2)))
         assertEquals(listOf(LinkId(1UL)), events.ready)
         assertEquals(NotificationSend.None, host.onNotificationSent(peer, true, 0))
     }
