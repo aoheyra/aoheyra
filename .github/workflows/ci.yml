@@ -2,6 +2,7 @@ name: ci
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
   push:
     branches: [master]
 
@@ -9,11 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: aoheyra/aoheyra-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   rust:
+    if: github.event.action != 'closed'
     name: rust checks
     runs-on: ubuntu-latest
     steps:
@@ -38,6 +40,7 @@ jobs:
         run: cargo doc --no-deps --workspace --all-features
 
   native:
+    if: github.event.action != 'closed'
     name: android native libraries
     runs-on: ubuntu-latest
     steps:
@@ -47,15 +50,21 @@ jobs:
           toolchain: "1.85"
       - uses: Swatinem/rust-cache@v2
       - uses: android-actions/setup-android@v3
+        with:
+          # setup-android@v3 defaults to the removed "tools" package.
+          packages: platform-tools
       - name: install NDK
         run: sdkmanager --install "ndk;25.1.8937393"
-      - uses: taiki-e/install-action@cargo-ndk
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
       - name: build all ABIs
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/25.1.8937393
         run: cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o android/app/src/main/jniLibs build --release
 
   android:
+    if: github.event.action != 'closed'
     name: android scaffold
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +74,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: android-actions/setup-android@v3
+        with:
+          # setup-android@v3 defaults to the removed "tools" package.
+          packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
       - name: assemble, lint and test
         working-directory: android
